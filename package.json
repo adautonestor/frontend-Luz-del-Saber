@@ -1,0 +1,48 @@
+{
+  "name": "luz-del-saber-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "4.3.0",
+    "date-fns": "4.1.0",
+    "file-saver": "2.0.5",
+    "framer-motion": "12.23.12",
+    "html2canvas": "1.4.1",
+    "html5-qrcode": "2.3.8",
+    "jspdf": "3.0.2",
+    "jspdf-autotable": "5.0.2",
+    "lucide-react": "0.544.0",
+    "qrcode": "1.5.4",
+    "qrcode.react": "4.2.0",
+    "react": "^18.2.0",
+    "react-barcode": "1.6.1",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "2.6.0",
+    "react-qr-code": "2.0.18",
+    "react-qr-scanner": "1.0.0-alpha.11",
+    "react-router-dom": "7.9.1",
+    "react-webcam": "7.2.0",
+    "xlsx": "0.18.5",
+    "zustand": "5.0.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.2.0"
+  }
+}

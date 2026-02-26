@@ -1,0 +1,6 @@
+export { default as CommunicationsHeader } from './CommunicationsHeader'
+export { default as CommunicationsFiltersBar } from './CommunicationsFiltersBar'
+export { default as CommunicationsList } from './CommunicationsList'
+export { default as CommunicationItem } from './CommunicationItem'
+export { default as MessageComposerModal } from './MessageComposerModal'
+export { default as MessageDetailModal } from './MessageDetailModal'

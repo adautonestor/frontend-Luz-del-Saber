@@ -1,0 +1,5 @@
+export { default as CourseFormModal } from './CourseFormModal'
+export { default as CompetenciesModal } from './CompetenciesModal'
+export { default as CourseCompetenciesModal } from './CourseCompetenciesModal'
+export { default as AcademicAreasModal } from './AcademicAreasModal'
+export { default as AssignmentDetailsModal } from './AssignmentDetailsModal'

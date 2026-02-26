@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Estudiantes - Luz del Saber</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .warning {
+            color: #ffff00;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            overflow-x: auto;
+            max-height: 400px;
+            border: 1px solid #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 DEBUG: Estudiantes en localStorage</h1>
+
+    <div class="section">
+        <h2>Acciones:</h2>
+        <button onclick="checkStudents()">1. Verificar Estudiantes</button>
+        <button onclick="checkAllData()">2. Verificar Toda la DB</button>
+        <button onclick="regenerateDB()">3. Regenerar Base de Datos</button>
+        <button onclick="location.reload()">4. Refrescar Página</button>
+    </div>
+
+    <div class="section">
+        <h2>Resultados:</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function checkStudents() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="warning">⏳ Verificando estudiantes...</p>';
+
+            try {
+                // Obtener datos del localStorage
+                const dbData = localStorage.getItem('luzDelSaberDB');
+
+                if (!dbData) {
+                    results.innerHTML = '<p class="error">❌ NO HAY DATOS EN localStorage (luzDelSaberDB)</p>';
+                    return;
+                }
+
+                const db = JSON.parse(dbData);
+                const students = db.students || [];
+
+                let html = '<h3 class="success">✅ Base de datos encontrada</h3>';
+                html += `<p><strong>Total de estudiantes:</strong> ${students.length}</p>`;
+
+                if (students.length === 0) {
+                    html += '<p class="error">⚠️ NO HAY ESTUDIANTES EN LA BASE DE DATOS</p>';
+                    html += '<p>Usa el botón "3. Regenerar Base de Datos" para crear datos de prueba</p>';
+                } else {
+                    // Mostrar primeros 5 estudiantes
+                    html += '<h4>Primeros 5 estudiantes:</h4>';
+                    html += '<pre>';
+                    students.slice(0, 5).forEach((s, i) => {
+                        html += `\n${i + 1}. ${s.nombres} ${s.apellidoPaterno} ${s.apellidoMaterno}`;
+                        html += `\n   ID: ${s.id}`;
+                        html += `\n   DNI: ${s.dni}`;
+                        html += `\n   Nivel: ${s.nivelId}`;
+                        html += `\n   Grado: ${s.gradoId}`;
+                        html += `\n   Sección: ${s.seccionId}`;
+                        html += `\n   Activo: ${s.activo}`;
+                        html += `\n`;
+                    });
+                    html += '</pre>';
+
+                    // Contar por nivel
+                    const porNivel = {
+                        inicial: students.filter(s => s.nivelId === 'inicial').length,
+                        primaria: students.filter(s => s.nivelId === 'primaria').length,
+                        secundaria: students.filter(s => s.nivelId === 'secundaria').length
+                    };
+
+                    html += '<h4>Estudiantes por nivel:</h4>';
+                    html += '<ul>';
+                    html += `<li>Inicial: ${porNivel.inicial}</li>`;
+                    html += `<li>Primaria: ${porNivel.primaria}</li>`;
+                    html += `<li>Secundaria: ${porNivel.secundaria}</li>`;
+                    html += '</ul>';
+
+                    // Contar activos vs inactivos
+                    const activos = students.filter(s => s.activo === true).length;
+                    const inactivos = students.filter(s => s.activo === false).length;
+                    const sinDefinir = students.filter(s => s.activo === undefined).length;
+
+                    html += '<h4>Estado activo:</h4>';
+                    html += '<ul>';
+                    html += `<li>Activos (true): ${activos}</li>`;
+                    html += `<li>Inactivos (false): ${inactivos}</li>`;
+                    html += `<li>Sin definir (undefined): ${sinDefinir}</li>`;
+                    html += '</ul>';
+                }
+
+                results.innerHTML = html;
+
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ ERROR: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+
+        function checkAllData() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="warning">⏳ Verificando toda la base de datos...</p>';
+
+            try {
+                const dbData = localStorage.getItem('luzDelSaberDB');
+
+                if (!dbData) {
+                    results.innerHTML = '<p class="error">❌ NO HAY DATOS EN localStorage</p>';
+                    return;
+                }
+
+                const db = JSON.parse(dbData);
+
+                let html = '<h3 class="success">✅ Contenido de la base de datos:</h3>';
+                html += '<pre>';
+
+                for (const [table, data] of Object.entries(db)) {
+                    if (Array.isArray(data)) {
+                        html += `\n${table}: ${data.length} registros`;
+                    } else {
+                        html += `\n${table}: ${typeof data}`;
+                    }
+                }
+
+                html += '</pre>';
+
+                results.innerHTML = html;
+
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ ERROR: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+
+        function regenerateDB() {
+            if (!confirm('¿Estás seguro de que quieres regenerar TODA la base de datos?\n\nEsto eliminará TODOS los datos actuales.')) {
+                return;
+            }
+
+            const results = document.getElementById('results');
+            results.innerHTML = '<p class="warning">⏳ Regenerando base de datos...</p>';
+
+            try {
+                // Limpiar localStorage
+                localStorage.removeItem('luzDelSaberDB');
+
+                results.innerHTML = `
+                    <p class="success">✅ Base de datos limpiada</p>
+                    <p class="warning">⚠️ IMPORTANTE:</p>
+                    <p>1. Cierra esta ventana</p>
+                    <p>2. Recarga la aplicación principal (F5)</p>
+                    <p>3. La base de datos se regenerará automáticamente con datos de prueba</p>
+                `;
+
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ ERROR: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+
+        // Verificar automáticamente al cargar
+        window.onload = checkStudents;
+    </script>
+</body>
+</html>

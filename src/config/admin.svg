@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <defs>
+    <style>
+      .title-box { fill: #3b82f6; stroke: #1e40af; stroke-width: 2; }
+      .section-box { fill: #60a5fa; stroke: #2563eb; stroke-width: 2; }
+      .item-box { fill: white; stroke: #93c5fd; stroke-width: 1.5; }
+      .title-text { fill: white; font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; }
+      .section-text { fill: white; font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; }
+      .item-text { fill: #1e40af; font-family: Arial, sans-serif; font-size: 11px; }
+      .line { stroke: #2563eb; stroke-width: 2; fill: none; }
+      .arrow { fill: #2563eb; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <rect x="200" y="10" width="200" height="40" rx="5" class="title-box"/>
+  <text x="300" y="35" text-anchor="middle" class="title-text">DIRECTOR</text>
+
+  <!-- Main line -->
+  <line x1="300" y1="50" x2="300" y2="80" class="line"/>
+  <line x1="300" y1="80" x2="150" y2="100" class="line"/>
+  <line x1="300" y1="80" x2="450" y2="100" class="line"/>
+
+  <!-- Left Section: GESTIÓN ACADÉMICA -->
+  <rect x="50" y="100" width="200" height="35" rx="5" class="section-box"/>
+  <text x="150" y="122" text-anchor="middle" class="section-text">GESTIÓN ACADÉMICA</text>
+
+  <line x1="150" y1="135" x2="150" y2="155" class="line"/>
+
+  <rect x="60" y="155" width="180" height="135" rx="5" class="item-box"/>
+  <text x="70" y="172" class="item-text">• Usuarios</text>
+  <text x="70" y="187" class="item-text">• Estudiantes</text>
+  <text x="70" y="202" class="item-text">• Estructura Académica</text>
+  <text x="70" y="217" class="item-text">• Rúbricas de Evaluación</text>
+  <text x="70" y="232" class="item-text">• Gestión de Horarios</text>
+  <text x="70" y="247" class="item-text">• Gestión de Boletas</text>
+  <text x="70" y="262" class="item-text">• Reportes</text>
+  <text x="70" y="277" class="item-text">• Configuración</text>
+
+  <!-- Right Section: CONTROL ADMINISTRATIVO -->
+  <rect x="350" y="100" width="200" height="35" rx="5" class="section-box"/>
+  <text x="450" y="122" text-anchor="middle" class="section-text">CONTROL ADMINISTRATIVO</text>
+
+  <line x1="450" y1="135" x2="450" y2="155" class="line"/>
+
+  <rect x="360" y="155" width="180" height="135" rx="5" class="item-box"/>
+  <text x="370" y="172" class="item-text">• Matrícula</text>
+  <text x="370" y="187" class="item-text">• Pagos</text>
+  <text x="370" y="202" class="item-text">• Asistencia</text>
+  <text x="370" y="217" class="item-text">• Comunicados</text>
+  <text x="370" y="232" class="item-text">• Avisos</text>
+  <text x="370" y="247" class="item-text">• Documentos</text>
+  <text x="370" y="262" class="item-text">• Reportes</text>
+  <text x="370" y="277" class="item-text">• Configuración</text>
+</svg>

@@ -1,0 +1,10 @@
+// Barrel export for reports components
+export { default as ReportsSummaryCards } from './ReportsSummaryCards'
+export { default as ReportCard } from './ReportCard'
+export { default as FinalStatusBanner } from './FinalStatusBanner'
+export { default as FinalGradesTable } from './FinalGradesTable'
+export { default as AcademicStatusSection } from './AcademicStatusSection'
+export { default as YearSummarySection } from './YearSummarySection'
+export { default as RemedialPlanSection } from './RemedialPlanSection'
+export { default as SignaturesSection } from './SignaturesSection'
+export * from './views'
