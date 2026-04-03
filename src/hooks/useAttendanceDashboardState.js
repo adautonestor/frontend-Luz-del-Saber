@@ -240,7 +240,7 @@ export const useAttendanceDashboardState = (user) => {
         const todayRecord = classData.records.find(r => r.student_id === student.id)
 
         return {
-          'Nombre': `${student.first_names} ${student.last_names}`,
+          'Nombre': `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() + `, ${student.first_names || ''}${student.last_names ? ' ' + student.last_names : ''}`,
           'DNI': student.dni,
           'Estado Hoy': todayRecord ? getStatusText(todayRecord.estadoEntrada) : 'Sin registro',
           'Total Días': stats.total,
@@ -336,7 +336,7 @@ export const useAttendanceDashboardState = (user) => {
         }
 
         const sorted = classStudents.sort((a, b) =>
-          `${a.last_names} ${a.first_names}`.localeCompare(`${b.last_names} ${b.first_names}`)
+          `${a.paternal_last_name || ''} ${a.maternal_last_name || ''} ${a.first_names || ''}`.localeCompare(`${b.paternal_last_name || ''} ${b.maternal_last_name || ''} ${b.first_names || ''}`)
         )
 
         setFilteredStudents(sorted)

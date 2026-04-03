@@ -124,6 +124,8 @@ const EnrollmentPage = () => {
       filtered = filtered.filter(s =>
         s.first_names?.toLowerCase().includes(searchLower) ||
         s.last_names?.toLowerCase().includes(searchLower) ||
+        s.paternal_last_name?.toLowerCase().includes(searchLower) ||
+        s.maternal_last_name?.toLowerCase().includes(searchLower) ||
         s.dni?.includes(filters.search) ||
         s.code?.toLowerCase().includes(searchLower)
       )
@@ -235,7 +237,7 @@ const EnrollmentPage = () => {
       // Formatear datos para Excel
       const exportData = filteredStudents.map(student => ({
         'Código': student.code || '',
-        'Apellidos': student.last_names || '',
+        'Apellidos': `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names || '',
         'Nombres': student.first_names || '',
         'DNI': student.dni || '',
         'Fecha Nacimiento': student.fechaNacimiento ? new Date(student.fechaNacimiento).toLocaleDateString('es-PE') : '',

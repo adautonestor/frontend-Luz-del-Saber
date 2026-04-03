@@ -27,7 +27,9 @@ const EditStudentModal = ({ student, onClose, onSuccess }) => {
 
   const [formData, setFormData] = useState({
     first_names: student.first_names || '',
-    last_names: student.last_names || '',
+    last_names: student.last_names || '', // Segundo nombre
+    paternal_last_name: student.paternal_last_name || '',
+    maternal_last_name: student.maternal_last_name || '',
     dni: student.dni || '',
     birth_date: student.birth_date ? new Date(student.birth_date).toISOString().split('T')[0] : '',
     gender: student.gender || '',
@@ -86,7 +88,7 @@ const EditStudentModal = ({ student, onClose, onSuccess }) => {
     const newErrors = {}
 
     if (!formData.first_names.trim()) newErrors.first_names = 'Nombres son requeridos'
-    if (!formData.last_names.trim()) newErrors.last_names = 'Apellidos son requeridos'
+    if (!formData.paternal_last_name.trim()) newErrors.paternal_last_name = 'Apellido Paterno es requerido'
     if (!formData.dni.trim()) newErrors.dni = 'DNI es requerido'
     else if (!/^\d{8}$/.test(formData.dni)) newErrors.dni = 'DNI debe tener 8 dígitos'
     if (!formData.birth_date) newErrors.birth_date = 'Fecha de nacimiento es requerida'
@@ -142,7 +144,7 @@ const EditStudentModal = ({ student, onClose, onSuccess }) => {
       <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            Editar Estudiante: {student.first_names} {student.last_names}
+            Editar Estudiante: {student.first_names} {`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names}
           </h3>
           <button
             onClick={onClose}
@@ -172,17 +174,45 @@ const EditStudentModal = ({ student, onClose, onSuccess }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Apellidos *
+                Segundo Nombre
               </label>
               <input
                 type="text"
                 name="last_names"
                 value={formData.last_names}
                 onChange={handleChange}
-                className={`input ${errors.last_names ? 'border-red-500' : ''}`}
-                placeholder="Apellidos del estudiante"
+                className="input"
+                placeholder="Segundo nombre (opcional)"
               />
-              {errors.last_names && <p className="text-red-500 text-xs mt-1">{errors.last_names}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Apellido Paterno *
+              </label>
+              <input
+                type="text"
+                name="paternal_last_name"
+                value={formData.paternal_last_name}
+                onChange={handleChange}
+                className={`input ${errors.paternal_last_name ? 'border-red-500' : ''}`}
+                placeholder="Apellido paterno"
+              />
+              {errors.paternal_last_name && <p className="text-red-500 text-xs mt-1">{errors.paternal_last_name}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Apellido Materno
+              </label>
+              <input
+                type="text"
+                name="maternal_last_name"
+                value={formData.maternal_last_name}
+                onChange={handleChange}
+                className="input"
+                placeholder="Apellido materno"
+              />
             </div>
 
             <div>
@@ -272,15 +302,9 @@ const EditStudentModal = ({ student, onClose, onSuccess }) => {
             {isEnrolled && (
               <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start">
                 <AlertTriangle className="text-amber-500 mr-2 flex-shrink-0 mt-0.5" size={18} />
-                <div>
-                  <p className="text-sm font-medium text-amber-800">
-                    Campos de asignación académica bloqueados
-                  </p>
-                  <p className="text-xs text-amber-700 mt-1">
-                    Este estudiante ya está matriculado. Para cambiar su asignación académica,
-                    debe anular la matrícula actual y crear una nueva.
-                  </p>
-                </div>
+                <p className="text-sm font-medium text-amber-800">
+                  Campos de asignación académica bloqueados
+                </p>
               </div>
             )}
 

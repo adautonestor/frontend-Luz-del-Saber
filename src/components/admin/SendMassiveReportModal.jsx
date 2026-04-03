@@ -203,7 +203,7 @@ const SendMassiveReportModal = ({
   const filteredStudents = scope === REPORT_SCOPES.INDIVIDUAL && searchTerm.length >= 2
     ? validStudents.filter(s => {
         const search = searchTerm.toLowerCase()
-        const fullName = `${s.first_names || ''} ${s.last_names || ''}`.toLowerCase()
+        const fullName = `${s.first_names || ''} ${s.last_names || ''} ${s.paternal_last_name || ''} ${s.maternal_last_name || ''}`.toLowerCase()
         return (
           fullName.includes(search) ||
           (s.dni || '').includes(searchTerm)
@@ -453,14 +453,14 @@ const SendMassiveReportModal = ({
                       type="button"
                       onClick={() => {
                         setScopeDetail(student.id)
-                        setSearchTerm(`${student.last_names}, ${student.first_names}`)
+                        setSearchTerm(`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}, ${student.first_names}${student.last_names ? ` ${student.last_names}` : ''}`)
                       }}
                       className={`w-full text-left px-4 py-2 hover:bg-purple-50 transition-colors border-b last:border-b-0 ${
                         scopeDetail === student.id ? 'bg-purple-100' : ''
                       }`}
                     >
                       <div className="font-medium text-gray-900">
-                        {student.last_names}, {student.first_names}
+                        {student.paternal_last_name || ''} {student.maternal_last_name || ''}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                       </div>
                       <div className="text-sm text-gray-600">
                         {student.nivelNombre || student.level_name || `Nivel ${student.level_id}`} - {student.gradoNombre || student.grade_name || student.grade_id} {student.seccionNombre || student.section_name || student.section_id} | DNI: {student.dni}

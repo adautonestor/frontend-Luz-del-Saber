@@ -62,7 +62,7 @@ const PsychReportsTable = ({
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">
-                        {student.last_names || `${student.apellidoPaterno} ${student.apellidoMaterno}`}, {student.first_names}
+                        {student.paternal_last_name || student.apellidoPaterno || ''} {student.maternal_last_name || student.apellidoMaterno || ''}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">

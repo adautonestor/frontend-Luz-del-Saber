@@ -63,13 +63,14 @@ const StudentsTab = ({
       doc.text('DATOS PERSONALES', 20, y)
       y += 8
 
+      const apellidos = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names || '-'
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.text(`Código: ${student.code || '-'}`, 20, y)
       y += 6
-      doc.text(`Apellidos: ${student.last_names || '-'}`, 20, y)
+      doc.text(`Apellidos: ${apellidos}`, 20, y)
       y += 6
-      doc.text(`Nombres: ${student.first_names || '-'}`, 20, y)
+      doc.text(`Nombres: ${student.first_names || '-'}${student.last_names ? ' ' + student.last_names : ''}`, 20, y)
       y += 6
       doc.text(`DNI: ${student.dni || '-'}`, 20, y)
       y += 6
@@ -131,7 +132,7 @@ const StudentsTab = ({
       doc.text('I.E.P. Luz del Saber - Sistema de Gestión Educativa', 105, 285, { align: 'center' })
 
       // Descargar archivo
-      const fileName = `Ficha_${student.last_names}_${student.first_names}_${student.code}.pdf`
+      const fileName = `Ficha_${apellidos}_${student.first_names}_${student.code}.pdf`
       doc.save(fileName)
     }
 
@@ -165,11 +166,12 @@ const StudentsTab = ({
     doc.text('DATOS PERSONALES', 20, y)
     y += 8
 
+    const apellidos = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names || '-'
     doc.setFontSize(11)
     doc.setFont('helvetica', 'normal')
     doc.text(`Código: ${student.code || '-'}`, 20, y)
     y += 6
-    doc.text(`Apellidos: ${student.last_names || '-'}`, 20, y)
+    doc.text(`Apellidos: ${apellidos}`, 20, y)
     y += 6
     doc.text(`Nombres: ${student.first_names || '-'}`, 20, y)
     y += 6
@@ -233,7 +235,7 @@ const StudentsTab = ({
     doc.text('I.E.P. Luz del Saber - Sistema de Gestión Educativa', 105, 285, { align: 'center' })
 
     // Descargar archivo
-    const fileName = `Ficha_${student.last_names}_${student.first_names}_${student.code}.pdf`
+    const fileName = `Ficha_${apellidos}_${student.first_names}_${student.code}.pdf`
     doc.save(fileName)
   }
 
@@ -335,7 +337,7 @@ const StudentsTab = ({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            {student.last_names}, {student.first_names}
+                            {`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || '-'}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                           </p>
                           <p className="text-xs text-gray-500">{student.dni}</p>
                         </div>

@@ -24,7 +24,7 @@ export const getParentStudents = (parentId, students, relations = []) => {
   return parentRelations.map(r => {
     const student_id = r.student_id || r.student_id
     const student = students.find(s => s.id === estudianteId)
-    return student ? `${student.first_names} ${student.last_names}` : ''
+    return student ? `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() + `, ${student.first_names || ''}${student.last_names ? ' ' + student.last_names : ''}` : ''
   }).filter(Boolean).join(', ')
 }
 

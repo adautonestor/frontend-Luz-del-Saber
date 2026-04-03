@@ -69,7 +69,7 @@ export const generateFailedStudentsReport = (
     })
 
     if (index < 3) {
-      console.log(`   Student ${index + 1}: ${student.first_names} ${student.last_names}`);
+      console.log(`   Student ${index + 1}: ${student.paternal_last_name || ''} ${student.maternal_last_name || ''}, ${student.first_names}${student.last_names ? ' ' + student.last_names : ''}`);
       console.log(`     - Level: ${level?.name}, Grade: ${grade?.name}, Section: ${section?.name}`);
       console.log(`     - Total grades: ${studentGradesForThisStudent.length}`);
       if (studentGradesForThisStudent.length > 0) {
@@ -104,7 +104,7 @@ export const generateFailedStudentsReport = (
     // Si el estudiante tiene cursos desaprobados, agregarlo al reporte
     if (failedSubjects.length > 0) {
       failedStudents.push({
-        studentName: `${student.first_names} ${student.last_names}`,
+        studentName: `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() + `, ${student.first_names || ''}${student.last_names ? ' ' + student.last_names : ''}`,
         studentCode: student.code || 'Sin código',
         level: level?.name || 'Sin nivel',
         grade: grade?.name || 'Sin grado',

@@ -47,7 +47,7 @@ const PaymentScheduleTable = ({
                   </td>
                   {parentStudents.length > 1 && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {paymentStudent ? `${paymentStudent.first_names} ${paymentStudent.last_names}` : '-'}
+                      {paymentStudent ? `${paymentStudent.paternal_last_name || ''} ${paymentStudent.maternal_last_name || ''}, ${paymentStudent.first_names}${paymentStudent.last_names ? ` ${paymentStudent.last_names}` : ''}` : '-'}
                     </td>
                   )}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

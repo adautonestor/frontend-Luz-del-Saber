@@ -213,7 +213,7 @@ export const PaymentSchedulePDF = ({ studentData, paymentSchedule, academicYear 
           <Text style={styles.sectionTitle}>DATOS DEL ESTUDIANTE</Text>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Nombre Completo:</Text>
-            <Text style={styles.value}>{studentData?.first_names} {studentData?.last_names}</Text>
+            <Text style={styles.value}>{studentData?.paternal_last_name || ''} {studentData?.maternal_last_name || ''}, {studentData?.first_names}{studentData?.last_names ? ` ${studentData.last_names}` : ''}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>DNI / Código:</Text>
@@ -333,7 +333,7 @@ export const generatePaymentSchedulePDFBlob = async (studentData, paymentSchedul
 
 // Componente de botón de descarga
 export const PaymentScheduleDownloadButton = ({ studentData, paymentSchedule, className, children }) => {
-  const fileName = `Cronograma_Pagos_${studentData?.first_names?.replace(/\s+/g, '_')}_${studentData?.last_names?.replace(/\s+/g, '_')}.pdf`
+  const fileName = `Cronograma_Pagos_${studentData?.first_names?.replace(/\s+/g, '_')}_${(studentData?.paternal_last_name || '')?.replace(/\s+/g, '_')}_${(studentData?.maternal_last_name || '')?.replace(/\s+/g, '_')}.pdf`
 
   return (
     <PDFDownloadLink

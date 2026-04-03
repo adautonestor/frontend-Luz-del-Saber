@@ -1019,7 +1019,7 @@ const PagosPorVerificarContent = () => {
                   <tr key={intention.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {intention.student_first_names} {intention.student_last_names}
+                        {`${intention.student_paternal_last_name || ''} ${intention.student_maternal_last_name || ''}`.trim() || '-'}, {intention.student_first_names}{intention.student_last_names ? ` ${intention.student_last_names}` : ''}
                       </div>
                       <div className="text-xs text-gray-500">
                         Padre: {intention.parent_first_names} {intention.parent_last_names}
@@ -1095,7 +1095,7 @@ const PagosPorVerificarContent = () => {
             </div>
             <div className="p-4 overflow-y-auto flex-1">
               <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm">
-                <p><strong>Estudiante:</strong> {selectedIntention.student_first_names} {selectedIntention.student_last_names}</p>
+                <p><strong>Estudiante:</strong> {`${selectedIntention.student_paternal_last_name || ''} ${selectedIntention.student_maternal_last_name || ''}`.trim() || '-'}, {selectedIntention.student_first_names}{selectedIntention.student_last_names ? ` ${selectedIntention.student_last_names}` : ''}</p>
                 <p><strong>Monto:</strong> S/. {parseFloat(selectedIntention.amount).toFixed(2)}</p>
                 <p><strong>Método:</strong> {selectedIntention.payment_method}</p>
                 <p><strong>N° Operación:</strong> {selectedIntention.operation_number || 'N/A'}</p>

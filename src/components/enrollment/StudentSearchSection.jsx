@@ -69,7 +69,7 @@ const StudentSearchSection = ({
                     }`}
                   >
                     <div className="font-medium text-gray-900">
-                      {student.last_names}, {student.first_names}
+                      {`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names}, {student.first_names}
                     </div>
                     <div className="text-sm text-gray-600">
                       DNI: {student.dni}
@@ -97,7 +97,9 @@ const StudentSearchSection = ({
               </div>
               <div>
                 <span className="text-gray-600">Apellidos:</span>
-                <span className="ml-2 font-medium text-gray-900">{foundStudent.last_names}</span>
+                <span className="ml-2 font-medium text-gray-900">
+                  {`${foundStudent.paternal_last_name || ''} ${foundStudent.maternal_last_name || ''}`.trim() || foundStudent.last_names}
+                </span>
               </div>
               <div>
                 <span className="text-gray-600">DNI:</span>

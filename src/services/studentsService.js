@@ -1,6 +1,23 @@
 import { get, post, put, del } from './api'
 
 /**
+ * Extrae YYYY-MM-DD de cualquier formato de fecha (protege contra desfase de timezone)
+ * '2026-04-02T00:00:00.000Z' → '2026-04-02'
+ * '2026-04-02' → '2026-04-02'
+ * null → null
+ */
+const toDateOnly = (date) => {
+  if (!date) return null
+  if (typeof date === 'string') {
+    // Ya es YYYY-MM-DD puro
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date
+    // Es ISO timestamp: extraer parte de fecha directamente (NO crear Date)
+    if (/^\d{4}-\d{2}-\d{2}T/.test(date)) return date.split('T')[0]
+  }
+  return date
+}
+
+/**
  * Normalizar datos de estudiante del backend al formato esperado por el frontend
  * @param {Object} student - Estudiante del backend
  * @returns {Object} Estudiante normalizado
@@ -17,15 +34,15 @@ const normalizeStudent = (student) => {
     first_names: student.first_names,
     last_names: student.last_names,
     dni: student.dni,
-    birth_date: student.birth_date,
+    birth_date: toDateOnly(student.birth_date),
     gender: student.gender,
     sexo: student.gender, // Alias para compatibilidad con componentes legacy
-    fechaNacimiento: student.birth_date, // Alias para compatibilidad
+    fechaNacimiento: toDateOnly(student.birth_date), // Alias para compatibilidad
     telefono: student.phone, // Alias para compatibilidad
     direccion: student.address, // Alias para compatibilidad
     address: student.address,
     phone: student.phone,
-    enrollment_date: student.enrollment_date,
+    enrollment_date: toDateOnly(student.enrollment_date),
     status: student.status,
 
     // Mapear campos de relaciones al formato legacy esperado por el frontend
@@ -62,7 +79,7 @@ const normalizeStudent = (student) => {
     parentId: student.parent_id || null,
 
     // Fecha de matrícula (desde la tabla matriculation)
-    fechaMatricula: student.matriculation_date || student.enrollment_date || null
+    fechaMatricula: toDateOnly(student.matriculation_date) || toDateOnly(student.enrollment_date) || null
   }
 }
 

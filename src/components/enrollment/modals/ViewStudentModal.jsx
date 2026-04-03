@@ -77,11 +77,13 @@ const ViewStudentModal = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-500">Nombres</p>
-                <p className="font-medium text-gray-900">{student.first_names}</p>
+                <p className="font-medium text-gray-900">{student.first_names}{student.last_names ? ` ${student.last_names}` : ''}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Apellidos</p>
-                <p className="font-medium text-gray-900">{student.last_names}</p>
+                <p className="font-medium text-gray-900">
+                  {`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || 'No especificado'}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">DNI</p>

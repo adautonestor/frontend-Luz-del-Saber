@@ -18,19 +18,13 @@ export const useGradingConfig = () => {
       try {
         setLoading(true)
         // Usar la nueva API de escalas de calificación
-        console.log('[useGradingConfig] Cargando configuración desde API...')
         const result = await gradingScalesService.getGradingScalesConfig('active')
-        console.log('[useGradingConfig] Respuesta de API:', result)
 
         if (result && result.levels) {
-          console.log('[useGradingConfig] ✅ Configuración cargada con niveles:', Object.keys(result.levels))
           setRawConfig(result)
-          // Convertir el formato nuevo al formato antiguo para compatibilidad
           const convertedConfig = convertToLegacyFormat(result)
-          console.log('[useGradingConfig] Configuración convertida a legacy:', convertedConfig)
           setGradingConfig(convertedConfig)
         } else {
-          console.log('[useGradingConfig] ⚠️ No hay niveles en la respuesta, usando defaults')
           setGradingConfig(getDefaultConfig())
         }
       } catch (err) {
@@ -162,10 +156,7 @@ export const useGradingConfig = () => {
    * @returns {Array} Array de opciones con formato completo
    */
   const getLiteralGradeOptionsByLevelId = useCallback((levelId) => {
-    console.log('[useGradingConfig] getLiteralGradeOptionsByLevelId llamado con ID:', levelId)
-
     if (!levelId || !rawConfig?.levels) {
-      console.log('[useGradingConfig] Retornando defaults porque no hay levelId o rawConfig.levels')
       return getDefaultLiteralOptions()
     }
 
@@ -173,21 +164,16 @@ export const useGradingConfig = () => {
     const levelConfig = rawConfig.levels[levelId] || rawConfig.levels[String(levelId)]
 
     if (levelConfig) {
-      console.log(`[useGradingConfig] ✅ Encontrado nivel ID ${levelId}:`, levelConfig.level_name, 'tipo:', levelConfig.type)
-
       if (levelConfig.type === 'letters' && levelConfig.scale) {
-        const result = levelConfig.scale.map(item => ({
+        return levelConfig.scale.map(item => ({
           value: item.value,
           label: item.label || item.value,
           numericValue: item.numericValue,
           color: item.color || '#9ca3af'
         }))
-        console.log('[useGradingConfig] Escala por ID:', result)
-        return result
       }
     }
 
-    console.log(`[useGradingConfig] ❌ No se encontró nivel con ID ${levelId}, retornando defaults`)
     return getDefaultLiteralOptions()
   }, [rawConfig])
 
@@ -198,10 +184,7 @@ export const useGradingConfig = () => {
    * @returns {Array} Array de opciones con formato completo
    */
   const getLiteralGradeOptionsForLevel = useCallback((levelName) => {
-    console.log('[useGradingConfig] getLiteralGradeOptionsForLevel (por nombre) llamado con:', levelName)
-
     if (!levelName || !rawConfig?.levels) {
-      console.log('[useGradingConfig] Retornando defaults porque no hay rawConfig.levels')
       return getDefaultLiteralOptions()
     }
 

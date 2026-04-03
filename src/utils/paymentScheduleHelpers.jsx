@@ -49,7 +49,7 @@ export const filterStudentsByName = (students, searchName) => {
 
   const searchLower = searchName.toLowerCase()
   return students.filter(student => {
-    const fullName = `${student.first_names} ${student.last_names}`.toLowerCase()
+    const fullName = `${student.first_names} ${student.last_names || ''} ${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.toLowerCase()
     return fullName.includes(searchLower)
   })
 }
@@ -239,7 +239,7 @@ export const exportScheduleToExcel = ({
   // Header con información del estudiante
   sheetData.push(['CRONOGRAMA DE PAGOS'])
   sheetData.push([])
-  sheetData.push(['Estudiante:', `${selectedStudent.first_names} ${selectedStudent.last_names}`])
+  sheetData.push(['Estudiante:', `${selectedStudent.paternal_last_name || ''} ${selectedStudent.maternal_last_name || ''}, ${selectedStudent.first_names}${selectedStudent.last_names ? ` ${selectedStudent.last_names}` : ''}`])
   sheetData.push(['DNI / Código:', selectedStudent.dni || '-'])
   sheetData.push(['Nivel:', selectedStudent.nivel || '-'])
   sheetData.push(['Grado:', `${selectedStudent.grado || '-'}° - Sección ${selectedStudent.seccion || '-'}`])
@@ -281,7 +281,7 @@ export const exportScheduleToExcel = ({
     const row = [payment.academic_year || '-']
 
     if (parentStudents.length > 1) {
-      row.push(paymentStudent ? `${paymentStudent.first_names} ${paymentStudent.last_names}` : '-')
+      row.push(paymentStudent ? `${paymentStudent.paternal_last_name || ''} ${paymentStudent.maternal_last_name || ''}, ${paymentStudent.first_names}${paymentStudent.last_names ? ` ${paymentStudent.last_names}` : ''}` : '-')
     }
 
     // Calcular el estado correcto usando la misma lógica que la tabla
@@ -333,7 +333,7 @@ export const exportScheduleToExcel = ({
   // Nombre del archivo
   const fileName = parentStudents.length > 1
     ? `Cronograma_Familiar_${studentParent?.apellidoPaterno || studentParent?.last_names || 'Padre'}_${new Date().toISOString().slice(0, 10)}.xlsx`
-    : `Cronograma_${selectedStudent.last_names}_${selectedStudent.first_names}_TodosLosAnios_${new Date().toISOString().slice(0, 10)}.xlsx`
+    : `Cronograma_${selectedStudent.paternal_last_name || ''}_${selectedStudent.first_names}_TodosLosAnios_${new Date().toISOString().slice(0, 10)}.xlsx`
 
   XLSX.writeFile(wb, fileName)
 }
@@ -342,7 +342,9 @@ export const exportScheduleToExcel = ({
  * Formatea el nombre completo del estudiante
  */
 export const formatStudentFullName = (student) => {
-  return `${student.last_names}, ${student.first_names}`
+  const apellidos = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim()
+  const nombres = `${student.first_names || ''}${student.last_names ? ` ${student.last_names}` : ''}`
+  return `${apellidos}, ${nombres}`
 }
 
 /**

@@ -108,7 +108,7 @@ const ParentHorarios = () => {
       const blobUrl = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = blobUrl
-      const childName = selectedChild ? `${selectedChild.first_names}_${selectedChild.last_names}` : 'escolar'
+      const childName = selectedChild ? `${selectedChild.first_names}_${selectedChild.paternal_last_name || ''}` : 'escolar'
       link.download = `horario_${childName.replace(/\s+/g, '_')}.png`
       document.body.appendChild(link)
       link.click()
@@ -151,7 +151,7 @@ const ParentHorarios = () => {
             </h1>
             <p className="text-gray-600 mt-1">
               {selectedChild
-                ? `Horario de ${selectedChild.first_names} ${selectedChild.last_names}`
+                ? `Horario de ${selectedChild.first_names}${selectedChild.last_names ? ` ${selectedChild.last_names}` : ''} ${selectedChild.paternal_last_name || ''} ${selectedChild.maternal_last_name || ''}`.trim()
                 : 'Consulta el horario de clases de tu hijo'}
             </p>
           </div>
@@ -171,7 +171,7 @@ const ParentHorarios = () => {
                 >
                   {children.map(child => (
                     <option key={child.id} value={child.id}>
-                      {child.first_names} {child.last_names}
+                      {child.paternal_last_name || ''} {child.maternal_last_name || ''}, {child.first_names}{child.last_names ? ` ${child.last_names}` : ''}
                     </option>
                   ))}
                 </select>

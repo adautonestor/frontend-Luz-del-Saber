@@ -161,7 +161,7 @@ const ParentAttendance = () => {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <div className="text-sm font-medium">{child.first_names} {child.last_names}</div>
+                <div className="text-sm font-medium">{child.paternal_last_name || ''} {child.maternal_last_name || ''}, {child.first_names}{child.last_names ? ` ${child.last_names}` : ''}</div>
                 <div className="text-xs opacity-80">{child.gradeName}</div>
               </button>
             ))}
@@ -184,7 +184,7 @@ const ParentAttendance = () => {
                     Código de Barras del Carnet
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {selectedChildData.first_names} {selectedChildData.last_names}
+                    {selectedChildData.paternal_last_name || ''} {selectedChildData.maternal_last_name || ''}, {selectedChildData.first_names}{selectedChildData.last_names ? ` ${selectedChildData.last_names}` : ''}
                   </p>
                 </div>
               </div>

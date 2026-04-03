@@ -50,7 +50,7 @@ export async function generatePaymentSchedule(student) {
       const excluded_students = concept.excluded_students || []
       const student_id = student.id
       if (student_id && excluded_students.includes(student_id)) {
-        console.log(`Estudiante ${student.first_names} ${student.last_names} (ID: ${student_id}) excluido del concepto "${concept.name || 'Sin nombre'}"`)
+        console.log(`Estudiante ${student.paternal_last_name || ''} ${student.maternal_last_name || ''}, ${student.first_names} (ID: ${student_id}) excluido del concepto "${concept.name || 'Sin nombre'}"`)
         return // Saltar este concepto
       }
 
@@ -74,7 +74,7 @@ export async function generatePaymentSchedule(student) {
           console.error('Error creando obligación:', error)
         }
       }
-      console.log(`Cronograma de pagos generado: ${paymentSchedule.length} pagos creados para ${student.first_names} ${student.last_names}${discountPercentage > 0 ? ` con ${discountPercentage}% de descuento` : ''}`)
+      console.log(`Cronograma de pagos generado: ${paymentSchedule.length} pagos creados para ${student.paternal_last_name || ''} ${student.maternal_last_name || ''}, ${student.first_names}${discountPercentage > 0 ? ` con ${discountPercentage}% de descuento` : ''}`)
     }
   } catch (error) {
     console.error('Error generando cronograma de pagos:', error)
@@ -102,7 +102,7 @@ function generateMonthlyPayments(student, concept, discountPercentage, currentYe
   if (fechaIngreso) {
     const ingresoDate = new Date(fechaIngreso)
     startMonthIndex = ingresoDate.getMonth() // 0-11
-    console.log(`Estudiante ${student.first_names} ${student.last_names} ingresó en ${monthNames[startMonthIndex]}. Generando pagos desde ese mes.`)
+    console.log(`Estudiante ${student.paternal_last_name || ''} ${student.maternal_last_name || ''}, ${student.first_names} ingresó en ${monthNames[startMonthIndex]}. Generando pagos desde ese mes.`)
   }
 
   meses.forEach(mesNombre => {
@@ -221,7 +221,7 @@ export async function generateCustomPaymentSchedule(student, customPayments, ano
       }
     }
 
-    console.log(`Cronograma personalizado generado: ${obligations.length} pagos para ${student.first_names} ${student.last_names}`)
+    console.log(`Cronograma personalizado generado: ${obligations.length} pagos para ${student.paternal_last_name || ''} ${student.maternal_last_name || ''}, ${student.first_names}`)
   } catch (error) {
     console.error('Error generando cronograma personalizado:', error)
     throw error

@@ -280,7 +280,7 @@ const StudentCardsGenerator = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {student.first_names} {student.last_names}
+                          {student.paternal_last_name || ''} {student.maternal_last_name || ''}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                         </div>
                         <div className="text-sm text-gray-500">{student.dni}</div>
                       </td>
@@ -390,10 +390,10 @@ const PrintableCards = ({ students }) => {
               {/* Info */}
               <div className="flex-1 text-xs">
                 <p className="font-bold text-gray-900 mb-1">
-                  {student.first_names}
+                  {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                 </p>
                 <p className="font-bold text-gray-900 mb-2">
-                  {student.last_names}
+                  {student.paternal_last_name || ''} {student.maternal_last_name || ''}
                 </p>
                 <p className="text-gray-600">
                   <span className="font-medium">Nivel:</span> {student.nivel}

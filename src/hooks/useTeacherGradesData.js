@@ -220,20 +220,12 @@ export const useTeacherGradesData = () => {
   // Formato: [{ value: 'AA', label: 'Logro destacado', numericValue: 4, color: '#22c55e' }, ...]
   // IMPORTANTE: Usa el ID del nivel (selectedLevel) para evitar ambigüedades con niveles duplicados
   const literalGradeOptions = useMemo(() => {
-    console.log('[useTeacherGradesData] Calculando literalGradeOptions...')
-    console.log('[useTeacherGradesData] - selectedLevel (ID):', selectedLevel)
-    console.log('[useTeacherGradesData] - selectedLevelName:', selectedLevelName)
-    console.log('[useTeacherGradesData] - currentGradingSystem:', currentGradingSystem)
-    console.log('[useTeacherGradesData] - gradingConfigLoading:', gradingConfigLoading)
-    console.log('[useTeacherGradesData] - rawConfig disponible:', !!rawConfig)
-
     if (!selectedLevel) return null
     if (currentGradingSystem === 'vigesimal') return null // No necesario para numérico
     if (gradingConfigLoading) return null // Esperar a que cargue la config
 
     // USAR ID del nivel en lugar de nombre para evitar confusión con niveles duplicados
     const options = getLiteralGradeOptionsByLevelId(selectedLevel)
-    console.log('[useTeacherGradesData] literalGradeOptions resultado para nivel ID', selectedLevel, '(', selectedLevelName, '):', options)
     return options
   }, [selectedLevel, selectedLevelName, currentGradingSystem, getLiteralGradeOptionsByLevelId, rawConfig, gradingConfigLoading])
 

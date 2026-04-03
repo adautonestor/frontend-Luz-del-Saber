@@ -118,7 +118,7 @@ const MessagesList = ({
       if (dateCompare !== 0) return dateCompare
 
       // Luego ordenar por prioridad (alta > media > baja)
-      const priorityOrder = { alta: 3, media: 2, baja: 1 }
+      const priorityOrder = { alta: 4, media: 3, normal: 2, baja: 1 }
       return (priorityOrder[b.prioridad] || 0) - (priorityOrder[a.prioridad] || 0)
     })
 
@@ -157,6 +157,8 @@ const MessagesList = ({
                       ? 'bg-red-100 text-red-800'
                       : comm.prioridad === 'media'
                       ? 'bg-yellow-100 text-yellow-800'
+                      : comm.prioridad === 'normal'
+                      ? 'bg-blue-100 text-blue-800'
                       : 'bg-green-100 text-green-800'
                   }`}>
                     {comm.prioridad}

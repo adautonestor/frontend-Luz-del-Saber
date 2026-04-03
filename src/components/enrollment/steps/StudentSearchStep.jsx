@@ -64,7 +64,9 @@ const StudentSearchStep = ({
               </div>
               <div>
                 <span className="text-gray-600">Apellidos:</span>
-                <span className="ml-2 font-medium text-gray-900">{formData.last_names}</span>
+                <span className="ml-2 font-medium text-gray-900">
+                  {`${formData.paternal_last_name || ''} ${formData.maternal_last_name || ''}`.trim() || formData.last_names}
+                </span>
               </div>
               <div>
                 <span className="text-gray-600">DNI:</span>

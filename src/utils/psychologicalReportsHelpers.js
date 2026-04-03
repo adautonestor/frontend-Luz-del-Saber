@@ -69,7 +69,7 @@ export const getDistributionPreview = (allStudents, scope, scopeDetail, levels =
     case REPORT_SCOPES.INDIVIDUAL:
       const student = targetStudents[0]
       if (student) {
-        message = `${student.first_names} ${student.last_names}`
+        message = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() + `, ${student.first_names || ''}${student.last_names ? ' ' + student.last_names : ''}`
       }
       break
     default:
@@ -96,7 +96,7 @@ export const filterStudents = (students, filters) => {
     }
 
     // Filtro por búsqueda
-    const fullName = `${student.first_names || ''} ${student.last_names || ''}`.toLowerCase()
+    const fullName = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''} ${student.first_names || ''} ${student.last_names || ''}`.toLowerCase()
     const matchesSearch = !searchTerm ||
       fullName.includes(searchTerm.toLowerCase()) ||
       (student.dni || '').includes(searchTerm)

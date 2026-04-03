@@ -550,7 +550,7 @@ export const usePaymentsStore = create((set, get) => ({
           obligationsArray.forEach(obl => {
             allObligations.push({
               ...obl,
-              student_name: `${child.first_names} ${child.last_names}`,
+              student_name: `${child.paternal_last_name || ''} ${child.maternal_last_name || ''}`.trim() + `, ${child.first_names || ''}${child.last_names ? ' ' + child.last_names : ''}`,
               student_id: child.id,
               // Datos completos del estudiante para PDF
               student_dni: child.dni,
@@ -559,7 +559,7 @@ export const usePaymentsStore = create((set, get) => ({
               student_grado: child.gradoNombre || child.grado,
               student_seccion: child.seccionNombre || child.seccion,
               // Campos mapeados para el componente FamilyPaymentSchedule
-              estudiante: `${child.first_names} ${child.last_names}`,
+              estudiante: `${child.paternal_last_name || ''} ${child.maternal_last_name || ''}`.trim() + `, ${child.first_names || ''}${child.last_names ? ' ' + child.last_names : ''}`,
               concepto: obl.concept_name || obl.concepto,
               concept_type: obl.concept_type,
               state: obl.status === 'paid' ? 'pagado' :

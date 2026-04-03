@@ -63,6 +63,7 @@ const CommunicationsFilters = ({
           <option value="todos">Todas las prioridades</option>
           <option value="alta">Alta (Urgente)</option>
           <option value="media">Media</option>
+          <option value="normal">Normal</option>
           <option value="baja">Baja</option>
         </select>
 

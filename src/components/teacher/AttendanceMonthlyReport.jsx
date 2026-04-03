@@ -33,7 +33,7 @@ const AttendanceMonthlyReport = ({
         )
         // Ordenar por apellidos
         filtered.sort((a, b) =>
-          `${a.last_names} ${a.first_names}`.localeCompare(`${b.last_names} ${b.first_names}`)
+          `${a.paternal_last_name || ''} ${a.maternal_last_name || ''} ${a.first_names || ''}`.localeCompare(`${b.paternal_last_name || ''} ${b.maternal_last_name || ''} ${b.first_names || ''}`)
         )
         setClassStudents(filtered)
       } catch (error) {
@@ -129,7 +129,7 @@ const AttendanceMonthlyReport = ({
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {student.last_names}, {student.first_names}
+                          {`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || '-'}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{stats?.total || 0}</td>

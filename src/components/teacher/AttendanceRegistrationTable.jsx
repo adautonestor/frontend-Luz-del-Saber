@@ -123,7 +123,7 @@ const AttendanceRegistrationTable = ({
 
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {student.last_names}, {student.first_names}
+                        {`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || '-'}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                       </div>
                       <div className="text-sm text-gray-500">DNI: {student.dni}</div>
                     </td>

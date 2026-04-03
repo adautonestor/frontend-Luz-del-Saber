@@ -62,7 +62,7 @@ export function groupObligationsByPeriod(obligations, students = [], concepts = 
       calculateMoraFn(obligation.due_date, obligation.total_amount) : 0
 
     groupedObligations[key].detalles.push({
-      estudiante: student ? `${student.first_names} ${student.last_names}` : 'N/A',
+      estudiante: student ? `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() + `, ${student.first_names || ''}${student.last_names ? ' ' + student.last_names : ''}` : 'N/A',
       student_id: student?.id,
       concepto: concept?.name || 'N/A',
       concept_id: concept?.id,

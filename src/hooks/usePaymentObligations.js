@@ -218,8 +218,12 @@ export const usePaymentObligations = () => {
       filtered = filtered.filter(o => {
         const studentName = o.studentName || o.student_name || o.estudiante || ''
         const studentFirstNames = o.student_first_names || o.first_names || ''
-        const studentLastNames = o.student_last_names || o.last_names || ''
-        const fullName = `${studentFirstNames} ${studentLastNames}`.trim()
+        const studentSecondName = o.student_last_names || o.last_names || ''
+        const studentPaternalLN = o.student_paternal_last_name || o.paternal_last_name || ''
+        const studentMaternalLN = o.student_maternal_last_name || o.maternal_last_name || ''
+        const nombres = studentSecondName ? `${studentFirstNames} ${studentSecondName}` : studentFirstNames
+        const apellidos = `${studentPaternalLN} ${studentMaternalLN}`.trim()
+        const fullName = `${apellidos} ${nombres}`.trim()
 
         return studentName.toLowerCase().includes(searchLower) ||
                fullName.toLowerCase().includes(searchLower)

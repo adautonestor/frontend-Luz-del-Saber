@@ -42,7 +42,6 @@ export const useCommunicationsData = () => {
           return rol !== 'estudiante' && status === 'active'
         })
         setAvailableUsers(filteredUsers)
-        console.log('📧 Users loaded:', filteredUsers.length)
       } catch (error) {
         console.error('Error loading users:', error)
         setAvailableUsers([])
@@ -53,13 +52,6 @@ export const useCommunicationsData = () => {
       const uniqueAreas = [...new Set(allCourses.map(course => course.area).filter(Boolean))]
       setAreas(uniqueAreas)
 
-      console.log('✅ Communications data loaded:', {
-        users: availableUsers.length,
-        levels: academicStore.levels?.length || 0,
-        grades: academicStore.grades?.length || 0,
-        sections: academicStore.sections?.length || 0,
-        areas: uniqueAreas.length
-      })
     } catch (error) {
       console.error('Error loading communications data:', error)
     } finally {

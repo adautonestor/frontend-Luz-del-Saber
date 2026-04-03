@@ -90,7 +90,7 @@ const AttendanceScannerPage = () => {
     // Filtro por búsqueda (nombre o DNI)
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
-      const studentName = `${record.student_first_names || ''} ${record.student_last_names || ''}`.toLowerCase()
+      const studentName = `${record.student_paternal_last_name || ''} ${record.student_maternal_last_name || ''} ${record.student_first_names || ''} ${record.student_last_names || ''}`.toLowerCase()
       const dni = record.dni || ''
       if (!studentName.includes(term) && !dni.includes(term)) {
         return false
@@ -149,7 +149,7 @@ const AttendanceScannerPage = () => {
     }
 
     const excelData = filteredRecords.map(record => ({
-      'Estudiante': `${record.student_last_names || ''}, ${record.student_first_names || ''}`,
+      'Estudiante': `${record.student_paternal_last_name || ''} ${record.student_maternal_last_name || ''}`.trim() + `, ${record.student_first_names || ''}${record.student_last_names ? ' ' + record.student_last_names : ''}`,
       'DNI': record.dni || '-',
       'Nivel': record.level_name || '-',
       'Grado': record.grade_name || '-',
@@ -176,6 +176,18 @@ const AttendanceScannerPage = () => {
     }
   }, [cameraActive, showResult])
 
+  /**
+   * Extraer DNI (8 dígitos) del texto escaneado de un código de barras
+   * Los códigos de barras de DNI físicos pueden contener datos adicionales
+   */
+  const extractDniFromBarcode = (rawText) => {
+    if (!rawText) return null
+    const cleaned = String(rawText).trim()
+    // Intentar extraer 8 dígitos consecutivos (formato DNI peruano)
+    const dniMatch = cleaned.match(/\d{8}/)
+    return dniMatch ? dniMatch[0] : cleaned
+  }
+
   // Handle QR Scanner initialization and cleanup
   useEffect(() => {
     if (cameraActive && qrScannerRef.current) {
@@ -188,7 +200,10 @@ const AttendanceScannerPage = () => {
           Html5QrcodeSupportedFormats.CODE_128,
           Html5QrcodeSupportedFormats.CODE_39,
           Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.PDF_417,
+          Html5QrcodeSupportedFormats.ITF,
+          Html5QrcodeSupportedFormats.CODABAR
         ]
       }
 
@@ -198,9 +213,10 @@ const AttendanceScannerPage = () => {
         { facingMode: "environment" },
         config,
         (decodedText) => {
-          if (decodedText && decodedText !== lastScannedCode) {
-            setLastScannedCode(decodedText)
-            handleScan(decodedText)
+          const cleanedCode = extractDniFromBarcode(decodedText)
+          if (cleanedCode && cleanedCode !== lastScannedCode) {
+            setLastScannedCode(cleanedCode)
+            handleScan(cleanedCode)
 
             if (html5QrCodeRef.current?.isScanning) {
               html5QrCodeRef.current.stop().then(() => {
@@ -243,6 +259,8 @@ const AttendanceScannerPage = () => {
             id: record.student_id,
             first_names: record.student_first_names || record.first_names,
             last_names: record.student_last_names || record.last_names,
+            paternal_last_name: record.student_paternal_last_name || record.paternal_last_name,
+            maternal_last_name: record.student_maternal_last_name || record.maternal_last_name,
             dni: record.dni,
             level_name: record.level_name,
             grade_name: record.grade_name,
@@ -267,7 +285,16 @@ const AttendanceScannerPage = () => {
       return
     }
 
-    await handleScan(manualCode.trim())
+    // Limpiar el DNI: extraer 8 dígitos del texto ingresado/escaneado
+    const cleanedDni = extractDniFromBarcode(manualCode)
+    if (!cleanedDni) {
+      setScanResult({ success: false, message: 'No se pudo extraer un DNI válido del código ingresado' })
+      setShowResult(true)
+      setTimeout(() => setShowResult(false), 3000)
+      return
+    }
+
+    await handleScan(cleanedDni)
     setManualCode('')
   }
 
@@ -323,6 +350,11 @@ const AttendanceScannerPage = () => {
       // Manejar error de secuencia incorrecta con información adicional
       let errorMessage = error.message || 'Error al escanear código'
       let errorDetails = null
+
+      // Detectar error de red (Failed to fetch = servidor no accesible)
+      if (errorMessage === 'Failed to fetch' || errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
+        errorMessage = 'No se pudo conectar con el servidor. Verifique que el backend esté en ejecución y la conexión de red.'
+      }
 
       if (error.expectedName) {
         errorDetails = {
@@ -387,7 +419,7 @@ const AttendanceScannerPage = () => {
 
     const excelData = recentScans.map(scan => ({
       'Código': scan.student?.code || scan.student?.dni || '-',
-      'Estudiante': scan.student ? `${scan.student.last_names}, ${scan.student.first_names}` : '-',
+      'Estudiante': scan.student ? `${`${scan.student.paternal_last_name || ''} ${scan.student.maternal_last_name || ''}`.trim() || '-'}, ${scan.student.first_names}${scan.student.last_names ? ' ' + scan.student.last_names : ''}` : '-',
       'DNI': scan.student?.dni || '-',
       'Nivel': scan.student?.level_name || '-',
       'Grado/Sección': `${scan.student?.grade_name || ''} ${scan.student?.section_name || ''}`,
@@ -739,7 +771,7 @@ const AttendanceScannerPage = () => {
                   {scanResult.student && (
                     <>
                       <p className="text-lg font-bold text-gray-900 mt-1">
-                        {scanResult.student.first_names} {scanResult.student.last_names}
+                        {`${scanResult.student.paternal_last_name || ''} ${scanResult.student.maternal_last_name || ''}`.trim() || '-'}, {scanResult.student.first_names}{scanResult.student.last_names ? ` ${scanResult.student.last_names}` : ''}
                       </p>
                       <p className="text-sm text-gray-600">
                         {scanResult.student.level_name} - {scanResult.student.grade_name} {scanResult.student.section_name}
@@ -805,7 +837,7 @@ const AttendanceScannerPage = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">
-                        {scan.student?.first_names} {scan.student?.last_names}
+                        {`${scan.student?.paternal_last_name || ''} ${scan.student?.maternal_last_name || ''}`.trim() || '-'}, {scan.student?.first_names}{scan.student?.last_names ? ` ${scan.student.last_names}` : ''}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {scan.eventName} • {' '}
@@ -1059,7 +1091,7 @@ const AttendanceScannerPage = () => {
                       >
                         <td className="px-4 py-3">
                           <div className="text-sm font-medium text-gray-900">
-                            {record.student_last_names}, {record.student_first_names}
+                            {`${record.student_paternal_last_name || ''} ${record.student_maternal_last_name || ''}`.trim() || '-'}, {record.student_first_names}{record.student_last_names ? ` ${record.student_last_names}` : ''}
                           </div>
                           <div className="text-xs text-gray-500">DNI: {record.dni}</div>
                         </td>

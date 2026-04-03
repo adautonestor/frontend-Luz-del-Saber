@@ -64,7 +64,7 @@ const GradeCard = ({ grade, student, course, category, subcategory }) => {
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <User size={14} />
-          <span>{student.first_names} {student.last_names}</span>
+          <span>{student.paternal_last_name || ''} {student.maternal_last_name || ''}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Calendar size={14} />

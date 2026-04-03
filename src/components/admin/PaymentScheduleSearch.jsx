@@ -70,7 +70,7 @@ const PaymentScheduleSearch = ({
                     className="w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0"
                   >
                     <div className="font-medium text-gray-900">
-                      {student.last_names}, {student.first_names}
+                      {student.paternal_last_name || ''} {student.maternal_last_name || ''}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                     </div>
                     <div className="text-sm text-gray-600">
                       DNI: {student.dni} - {student.nivel || 'Sin nivel'} {student.grado || ''}
@@ -125,7 +125,7 @@ const PaymentScheduleSearch = ({
                     className="w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors border-b last:border-b-0"
                   >
                     <div className="font-medium text-gray-900">
-                      {student.last_names}, {student.first_names}
+                      {student.paternal_last_name || ''} {student.maternal_last_name || ''}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
                     </div>
                     <div className="text-sm text-gray-600">
                       DNI: {student.dni} - {student.nivel} {student.grado}

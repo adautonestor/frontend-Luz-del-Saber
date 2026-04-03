@@ -15,7 +15,12 @@ export const attendanceService = {
    */
   async smartScan(dni, mode = 'auto') {
     try {
-      const response = await post('/attendance-records/smart-scan', { code: dni, mode })
+      // Limpiar el DNI: extraer 8 dígitos si vienen datos extra del código de barras
+      const cleanedDni = String(dni).trim()
+      const dniMatch = cleanedDni.match(/\d{8}/)
+      const code = dniMatch ? dniMatch[0] : cleanedDni
+
+      const response = await post('/attendance-records/smart-scan', { code, mode })
       return response.data || response
     } catch (error) {
       console.error('Error en escaneo de DNI:', error)

@@ -15,7 +15,7 @@ const DeleteStudentModal = ({ isOpen, student, onClose, onConfirm }) => {
         <p className="text-gray-600 mb-6">
           ¿Está seguro de eliminar al estudiante{' '}
           <span className="font-semibold">
-            {student.first_names} {student.last_names}
+            {student.paternal_last_name || ''} {student.maternal_last_name || ''}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
           </span>
           ?
         </p>

@@ -206,7 +206,7 @@ const ManualPaymentModal = ({ obligation, student, onClose, onSuccess }) => {
             <div>
               <span className="text-gray-600">Estudiante:</span>
               <p className="font-semibold text-gray-900">
-                {student?.first_names} {student?.last_names}
+                {student?.paternal_last_name || ''} {student?.maternal_last_name || ''}, {student?.first_names}{student?.last_names ? ` ${student.last_names}` : ''}
               </p>
             </div>
             <div>

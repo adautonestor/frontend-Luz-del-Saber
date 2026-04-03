@@ -7,6 +7,36 @@ import * as XLSX from 'xlsx'
 import { EXCEL_COLUMN_WIDTHS } from '../config/studentsConstants'
 
 /**
+ * Obtiene los nombres completos del estudiante (primer nombre + segundo nombre)
+ * last_names almacena el "segundo nombre", NO los apellidos
+ */
+export const getStudentNombres = (student) => {
+  if (!student) return '-'
+  const first = student.first_names || ''
+  const second = student.last_names || ''
+  return second ? `${first} ${second}`.trim() : first
+}
+
+/**
+ * Obtiene los apellidos completos (paterno + materno)
+ * NO usa last_names como fallback (ese campo es el segundo nombre)
+ */
+export const getStudentApellidos = (student) => {
+  if (!student) return '-'
+  const paterno = student.paternal_last_name || student.apellidoPaterno || ''
+  const materno = student.maternal_last_name || student.apellidoMaterno || ''
+  return `${paterno} ${materno}`.trim() || '-'
+}
+
+/**
+ * Nombre completo para mostrar en formato "Apellidos, Nombres"
+ */
+export const getStudentFullDisplay = (student) => {
+  if (!student) return '-'
+  return `${getStudentApellidos(student)}, ${getStudentNombres(student)}`
+}
+
+/**
  * Filtra estudiantes según criterios de búsqueda, nivel y grado
  * @param {Array} students - Array de estudiantes
  * @param {Function} searchFunction - Función de búsqueda del store
@@ -39,8 +69,8 @@ export const filterAndSortStudents = (students, searchFunction, searchTerm, filt
 
   // Aplicar ordenamiento por apellidos
   filtered = filtered.sort((a, b) => {
-    const apellidoPaternoA = (a.apellidoPaterno || a.last_names || '').toLowerCase()
-    const apellidoPaternoB = (b.apellidoPaterno || b.last_names || '').toLowerCase()
+    const apellidoPaternoA = (a.paternal_last_name || a.apellidoPaterno || '').toLowerCase()
+    const apellidoPaternoB = (b.paternal_last_name || b.apellidoPaterno || '').toLowerCase()
     const apellidoMaternoA = (a.apellidoMaterno || '').toLowerCase()
     const apellidoMaternoB = (b.apellidoMaterno || '').toLowerCase()
 
@@ -110,8 +140,13 @@ export const exportStudentsToExcel = (students) => {
       // Género en formato M/F
       const genero = student.gender || student.genero || student.sexo || 'M'
 
+      // Incluir segundo nombre en la columna Nombres
+      const nombresCompletos = student.last_names
+        ? `${student.first_names || ''} ${student.last_names}`.trim()
+        : (student.first_names || '')
+
       return {
-        'Nombres': student.first_names || '',
+        'Nombres': nombresCompletos,
         'Apellidos': apellidosCompletos,
         'DNI Estudiante': student.dni || '',
         'Fecha de Nacimiento': fechaNacimiento,

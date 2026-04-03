@@ -241,7 +241,7 @@ const PaymentConceptModal = ({
                         className="mr-2"
                       />
                       <span className="text-sm">
-                        {est.last_names}, {est.first_names} - {est.grado || 'Sin grado'} ({est.dni})
+                        {est.paternal_last_name || ''} {est.maternal_last_name || ''}, {est.first_names}{est.last_names ? ` ${est.last_names}` : ''} - {est.grado || 'Sin grado'} ({est.dni})
                       </span>
                     </label>
                   ))}
@@ -356,7 +356,7 @@ const PaymentConceptModal = ({
                     />
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900">
-                        {estudiante.first_names || ''} {estudiante.last_names || ''}
+                        {estudiante.paternal_last_name || ''} {estudiante.maternal_last_name || ''}, {estudiante.first_names || ''}{estudiante.last_names ? ` ${estudiante.last_names}` : ''}
                       </div>
                       <div className="text-xs text-gray-500">
                         Código: {estudiante.code || 'N/A'} • DNI: {estudiante.dni || 'N/A'}

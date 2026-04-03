@@ -203,7 +203,7 @@ const BoletaNotas = () => {
                     BOLETA DE CALIFICACIONES
                   </h2>
                   <p className="text-lg text-gray-700 mt-2">
-                    <strong>Estudiante:</strong> {selectedChild.first_names} {selectedChild.last_names}
+                    <strong>Estudiante:</strong> {selectedChild.paternal_last_name || ''} {selectedChild.maternal_last_name || ''}, {selectedChild.first_names}{selectedChild.last_names ? ` ${selectedChild.last_names}` : ''}
                   </p>
                   <p className="text-gray-600">
                     <strong>Grado:</strong> {selectedChild.gradeName} | <strong>Año:</strong> {selectedYear}

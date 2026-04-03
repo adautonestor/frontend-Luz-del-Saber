@@ -23,7 +23,7 @@ const PaymentScheduleStudentInfo = ({
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900">
-              {selectedStudent.first_names} {selectedStudent.last_names}
+              {selectedStudent.paternal_last_name || ''} {selectedStudent.maternal_last_name || ''}, {selectedStudent.first_names}{selectedStudent.last_names ? ` ${selectedStudent.last_names}` : ''}
             </h3>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-3 text-sm">
               <div>
@@ -60,6 +60,8 @@ const PaymentScheduleStudentInfo = ({
               studentData={{
                 first_names: selectedStudent.first_names,
                 last_names: selectedStudent.last_names,
+                paternal_last_name: selectedStudent.paternal_last_name,
+                maternal_last_name: selectedStudent.maternal_last_name,
                 dni: selectedStudent.dni,
                 code: selectedStudent.code || selectedStudent.codigoBarras,
                 nivel: selectedStudent.nivel,

@@ -158,7 +158,7 @@ const ContractManagementModal = ({ isOpen, onClose, student, onSave }) => {
             {/* Student Info */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium text-gray-900">
-                {student?.first_names} {student?.last_names}
+                {student?.paternal_last_name || ''} {student?.maternal_last_name || ''}, {student?.first_names}{student?.last_names ? ` ${student.last_names}` : ''}
               </p>
               <p className="text-xs text-gray-600 mt-1">
                 DNI: {student?.dni} | Código: {student?.code}

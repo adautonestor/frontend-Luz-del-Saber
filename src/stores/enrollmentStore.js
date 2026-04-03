@@ -352,7 +352,7 @@ export const useEnrollmentStore = create((set, get) => ({
         grade_id: parseInt(enrollmentData.grado),  // Ahora es ID, no nombre
         section_id: parseInt(enrollmentData.seccion),  // Ahora es ID, no nombre
         academic_year_id: parseInt(enrollmentData.anoLectivo),  // Ahora es ID, no año
-        enrollment_date: new Date().toISOString(),
+        enrollment_date: getTodayLima(),
         status: 'active',
         ...(enrollmentData.contratoNombre && {
           attached_contract: enrollmentData.contratoNombre
@@ -424,8 +424,9 @@ export const useEnrollmentStore = create((set, get) => ({
       byStatus,
       newEnrollments: studentsInYear.filter(s => {
         // Contar como nueva matrícula si tiene fecha de matrícula este año
-        const enrollmentDate = new Date(s.fecha_matricula || s.fechaMatricula || s.enrollment_date)
-        return enrollmentDate.getFullYear() === new Date().getFullYear()
+        const dateStr = s.fecha_matricula || s.fechaMatricula || s.enrollment_date || ''
+        const year = typeof dateStr === 'string' ? parseInt(dateStr.substring(0, 4)) : new Date(dateStr).getFullYear()
+        return year === new Date().getFullYear()
       }).length
     }
   },
