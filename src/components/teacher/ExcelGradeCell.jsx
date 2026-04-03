@@ -155,16 +155,11 @@ const ExcelGradeCell = ({
     // 🔧 FIX: Usar valueToSave si se proporciona, sino usar inputValue
     const finalValue = valueToSave !== null ? valueToSave : inputValue
 
-    console.log('🟢 finishEditing llamado - save:', save, 'valueToSave:', valueToSave, 'inputValue:', inputValue, 'finalValue:', finalValue, 'gradingMode:', gradingMode)
-
     if (save && finalValue.trim()) {
       // 🆕 Para modo literal, manejar directamente las letras
       if (gradingMode === 'literal') {
-        console.log('🟢 Modo LITERAL detectado, buscando grade para:', finalValue.trim().toUpperCase())
         // Comparación case-insensitive para soportar escalas personalizadas (AA, BB, etc.)
         const literalGrade = LITERAL_GRADES.find(g => g.value.toUpperCase() === finalValue.trim().toUpperCase())
-
-        console.log('🟢 LiteralGrade encontrado:', literalGrade)
 
         if (literalGrade) {
           const newGrades = [literalGrade.value]
@@ -183,12 +178,6 @@ const ExcelGradeCell = ({
             value: literalGrade.value
           }
 
-          console.log('🟢 Llamando a onChange con:', {
-            studentId,
-            evalTypeId,
-            data: dataToSend
-          })
-
           // Notificar cambio al componente padre
           onChange(studentId, evalTypeId, dataToSend)
 
@@ -196,8 +185,6 @@ const ExcelGradeCell = ({
           setIsEditing(false)
           setUserHasEdited(false)
           return
-        } else {
-          console.log('❌ NO se encontró literalGrade')
         }
       }
 

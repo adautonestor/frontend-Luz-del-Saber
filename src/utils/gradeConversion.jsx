@@ -85,14 +85,16 @@ export function getGradeColorClasses(value, levelId = null) {
 export function getLetterGradeColor(letterGrade) {
   if (!letterGrade || letterGrade === '-') return 'text-gray-400'
 
-  const upper = letterGrade.toUpperCase()
-  const colorMap = {
-    'A': 'text-green-600',
-    'B': 'text-blue-600',
-    'C': 'text-yellow-600',
-    'D': 'text-red-600'
+  // Obtener color del store dinámicamente
+  const hexColor = getGradingScalesStore().getGradeColor(letterGrade)
+  const hexToTextClass = {
+    '#22c55e': 'text-green-600',
+    '#3b82f6': 'text-blue-600',
+    '#eab308': 'text-yellow-600',
+    '#ef4444': 'text-red-600',
+    '#9ca3af': 'text-gray-400'
   }
-  return colorMap[upper] || 'text-gray-400'
+  return hexToTextClass[hexColor] || 'text-gray-400'
 }
 
 // ============================================
@@ -129,7 +131,9 @@ export function isValidGrade(value, gradingSystem = 'literal') {
 
   if (gradingSystem === 'literal') {
     if (typeof value === 'string') {
-      return ['A', 'B', 'C', 'D'].includes(value.toUpperCase())
+      // Verificar contra la escala configurada en el store
+      const numericValue = getGradingScalesStore().convertLetterToNumeric(value)
+      return numericValue !== null
     }
     return false
   }
@@ -159,13 +163,13 @@ export function validateGrade(value, gradingSystem = 'literal') {
 
   if (gradingSystem === 'literal') {
     if (typeof value === 'string') {
-      const upperValue = value.toUpperCase()
-      if (!['A', 'B', 'C', 'D'].includes(upperValue)) {
-        return { valid: false, error: 'Solo se permiten las calificaciones: A, B, C, D' }
+      const numericValue = getGradingScalesStore().convertLetterToNumeric(value)
+      if (numericValue === null) {
+        return { valid: false, error: 'Calificación no válida para la escala configurada' }
       }
       return { valid: true, error: null }
     }
-    return { valid: false, error: 'La calificación debe ser una letra (A, B, C, D)' }
+    return { valid: false, error: 'La calificación debe ser una letra válida' }
   }
 
   // Sistema vigesimal
@@ -261,9 +265,12 @@ export function convertGradeToNumeric(grade, gradingSystem = 'literal', levelId 
   }
 
   if (gradingSystem === 'literal') {
-    if (typeof grade === 'string' && ['A', 'B', 'C', 'D'].includes(grade.toUpperCase())) {
-      return getGradingScalesStore().convertLetterToNumeric(grade, levelId)
+    // Intentar convertir cualquier letra configurada (A, B, C, D, AD, F, etc.)
+    if (typeof grade === 'string') {
+      const numericValue = getGradingScalesStore().convertLetterToNumeric(grade, levelId)
+      if (numericValue !== null) return numericValue
     }
+    // Fallback: intentar parsear como número
     const numValue = parseFloat(grade)
     return !isNaN(numValue) ? numValue : null
   }

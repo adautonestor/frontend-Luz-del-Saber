@@ -4,9 +4,7 @@
  */
 
 import {
-  convertLetterToAverageValue,
-  convertAverageValueToLetter,
-  calculateFinalCourseAverage
+  convertAverageValueToLetter
 } from '@/utils/gradeConversion.jsx'
 
 /**
@@ -37,8 +35,7 @@ export const buildCompetenciasConNotas = (course, evaluationStructures, studentG
       notas1: [],
       notas2: [],
       notas3: [],
-      notas4: [],
-      promedio: null
+      notas4: []
     }]
   }
 
@@ -58,8 +55,7 @@ export const buildCompetenciasConNotas = (course, evaluationStructures, studentG
       notas1: [],
       notas2: [],
       notas3: [],
-      notas4: [],
-      promedio: null
+      notas4: []
     }]
   }
 
@@ -152,28 +148,6 @@ export const buildCompetenciasConNotas = (course, evaluationStructures, studentG
       }
     }
 
-    // Calculate average
-    const validGrades = bimesters.filter(g => g !== null)
-    let promedio = null
-    const studentLevelId = selectedChild?.level_id || null
-
-    if (validGrades.length > 0) {
-      if (typeof validGrades[0] === 'number') {
-        const sum = validGrades.reduce((acc, g) => acc + g, 0)
-        promedio = Math.round((sum / validGrades.length) * 100) / 100
-      } else {
-        // Sistema literal: convertir letras a números, promediar, reconvertir
-        const numericValues = validGrades
-          .map(g => convertLetterToAverageValue(g, studentLevelId))
-          .filter(v => v !== null)
-
-        if (numericValues.length > 0) {
-          const avgNumeric = numericValues.reduce((acc, v) => acc + v, 0) / numericValues.length
-          promedio = convertAverageValueToLetter(avgNumeric, studentLevelId)
-        }
-      }
-    }
-
     return {
       name: competencia.nombreCompetencia || competencia.name || `Competencia ${competencia.numero}`,
       bimestre1: bimesters[0],
@@ -183,58 +157,9 @@ export const buildCompetenciasConNotas = (course, evaluationStructures, studentG
       notas1: bimesterNotas[0],
       notas2: bimesterNotas[1],
       notas3: bimesterNotas[2],
-      notas4: bimesterNotas[3],
-      promedio: promedio
+      notas4: bimesterNotas[3]
     }
   })
-}
-
-/**
- * Calcula el promedio final de un curso
- * @param {Array} competenciasConNotas - Array de competencias con notas
- * @param {Object} selectedChild - Estudiante seleccionado (para obtener levelId)
- * @returns {number|string|null} Promedio final
- */
-export const calculateCourseAverage = (competenciasConNotas, selectedChild = null) => {
-  const competencyAverages = competenciasConNotas
-    .map(c => c.promedio)
-    .filter(p => p !== null)
-
-  if (competencyAverages.length === 0) return null
-
-  const levelId = selectedChild?.level_id || null
-
-  if (typeof competencyAverages[0] === 'string') {
-    const result = calculateFinalCourseAverage(competencyAverages, levelId)
-    return result.letter
-  } else {
-    return Math.round(
-      (competencyAverages.reduce((acc, p) => acc + p, 0) / competencyAverages.length) * 100
-    ) / 100
-  }
-}
-
-/**
- * Cuenta las competencias desaprobadas de un curso
- * @param {Array} competenciasConNotas - Array de competencias con notas
- * @param {Object} selectedChild - Estudiante seleccionado
- * @returns {number} Número de competencias desaprobadas
- */
-export const countFailedCompetencies = (competenciasConNotas, selectedChild) => {
-  return competenciasConNotas.filter(comp => {
-    if (comp.promedio === null) return false
-
-    const gradingSystem = selectedChild?.gradingSystem || 'secundaria'
-
-    if (gradingSystem === 'inicial' || gradingSystem === 'primaria') {
-      if (typeof comp.promedio === 'string') {
-        return comp.promedio === 'C' || comp.promedio === 'B'
-      }
-      return comp.promedio < 11
-    } else {
-      return comp.promedio < 11
-    }
-  }).length
 }
 
 /**
@@ -263,14 +188,9 @@ export const generateBoletaData = (child, courses = [], evaluationStructures = [
         competencyAverages  // Pasar promedios del backend
       )
 
-      const promedioFinal = calculateCourseAverage(competenciasConNotas, child)
-      const competenciasDesaprobadas = countFailedCompetencies(competenciasConNotas, child)
-
       return {
         cursoNombre: course.name,
-        competencias: competenciasConNotas,
-        promedioFinal: promedioFinal,
-        competenciasDesaprobadas: competenciasDesaprobadas
+        competencias: competenciasConNotas
       }
     }).filter(c => c !== null)
 

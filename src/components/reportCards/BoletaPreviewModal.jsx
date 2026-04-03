@@ -84,9 +84,6 @@ const BoletaPreviewModal = ({
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Bim IV
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
-                          Promedio Anual
-                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -115,37 +112,8 @@ const BoletaPreviewModal = ({
                               {comp.bimestre4 !== null ? comp.bimestre4 : '-'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-center bg-blue-50">
-                            <span className="text-sm font-bold text-blue-900">
-                              {comp.promedio !== null ? comp.promedio : '-'}
-                            </span>
-                          </td>
                         </tr>
                       ))}
-                      <tr className="bg-green-100 font-bold">
-                        <td className="px-6 py-4 text-sm text-gray-900">PROMEDIO FINAL DEL CURSO</td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="text-lg text-green-900">{curso.promedioFinal || '-'}</span>
-                        </td>
-                      </tr>
-                      <tr className={`${curso.competenciasDesaprobadas > 0 ? 'bg-red-50' : 'bg-blue-50'} font-semibold`}>
-                        <td className="px-6 py-4 text-sm text-gray-900">N° DE COMPETENCIAS DESAPROBADAS</td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4"></td>
-                        <td className="px-6 py-4 text-center">
-                          {curso.competenciasDesaprobadas > 0 ? (
-                            <span className="text-lg font-bold text-red-600">{curso.competenciasDesaprobadas}</span>
-                          ) : (
-                            <span className="text-lg font-bold text-green-600">0</span>
-                          )}
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>

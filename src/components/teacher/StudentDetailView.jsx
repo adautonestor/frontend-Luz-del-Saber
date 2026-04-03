@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import {
   X, User, Calendar, Mail, Phone, MapPin, GraduationCap,
-  Users, Star, FileText, BarChart3, Award, BookOpen
+  Users, FileText, BarChart3, BookOpen
 } from 'lucide-react'
 
 const StudentDetailView = ({
@@ -26,19 +26,6 @@ const StudentDetailView = ({
     return age
   }
 
-  // Calcular promedio anual de una competencia (promedio de los 4 bimestres)
-  const calculateCompetencyYearlyAverage = (competencyId) => {
-    let sum = 0
-    let count = 0
-    for (let bim = 1; bim <= 4; bim++) {
-      const avgData = getCompetencyAverage(student.id, competencyId, bim)
-      if (avgData && avgData.average_value !== null && avgData.average_value !== undefined) {
-        sum += avgData.average_value
-        count++
-      }
-    }
-    return count > 0 ? sum / count : null
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
@@ -190,38 +177,20 @@ const StudentDetailView = ({
             {courseCompetencies.length > 0 ? (
               <div className="space-y-4">
                 {courseCompetencies.map((comp, index) => {
-                  const yearlyAvg = calculateCompetencyYearlyAverage(comp.id)
-
                   return (
                     <div key={comp.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
                       {/* Header de competencia */}
                       <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                              <span className="text-blue-700 font-semibold text-sm">C{index + 1}</span>
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900">{comp.name}</h4>
-                              {comp.code && (
-                                <span className="text-xs text-gray-500">{comp.code}</span>
-                              )}
-                            </div>
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                            <span className="text-blue-700 font-semibold text-sm">C{index + 1}</span>
                           </div>
-                          {yearlyAvg !== null && (
-                            <div className="text-right">
-                              <span className="text-xs text-gray-500">Promedio Anual</span>
-                              <div className={`px-3 py-1 rounded-lg font-semibold ${getGradeColorFromAvg({
-                                average_value: yearlyAvg,
-                                grading_system: comp.grading_system || 'literal'
-                              })}`}>
-                                {formatGradeValue({
-                                  average_value: yearlyAvg,
-                                  grading_system: comp.grading_system || 'literal'
-                                })}
-                              </div>
-                            </div>
-                          )}
+                          <div>
+                            <h4 className="font-medium text-gray-900">{comp.name}</h4>
+                            {comp.code && (
+                              <span className="text-xs text-gray-500">{comp.code}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 

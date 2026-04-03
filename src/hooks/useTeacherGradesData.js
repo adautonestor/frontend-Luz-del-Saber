@@ -484,9 +484,14 @@ export const useTeacherGradesData = () => {
 
       if (gradeData !== undefined && gradeData !== null && weight > 0) {
         // Extraer el valor de la nota (puede ser objeto o valor directo)
-        let gradeValue = typeof gradeData === 'object' ? (gradeData.average || gradeData.value) : gradeData
+        // NOTA: Usar !== null/undefined en vez de || porque 0 es falsy (F=0)
+        let gradeValue
+        if (typeof gradeData === 'object') {
+          gradeValue = (gradeData.average !== undefined && gradeData.average !== null) ? gradeData.average : gradeData.value
+        } else {
+          gradeValue = gradeData
+        }
 
-        // ✅ USAR FUNCIÓN DE CONVERSIÓN CORRECTA
         const numericValue = convertGradeToNumeric(gradeValue, currentGradingSystem)
 
         if (numericValue !== null && !isNaN(numericValue)) {
@@ -501,8 +506,8 @@ export const useTeacherGradesData = () => {
       return null
     }
 
-    // Calcular promedio ponderado
-    const numericAverage = weightedSum // Ya viene ponderado
+    // Calcular promedio ponderado normalizado por el peso real calificado
+    const numericAverage = weightedSum / totalWeight
 
     // ✅ Retornar formato según sistema de calificación
     if (currentGradingSystem === 'literal') {
@@ -633,17 +638,18 @@ export const useTeacherGradesData = () => {
             return
           }
 
-          // Extraer el valor real (puede ser un objeto o un valor directo)
+          // Extraer el valor real (NO usar || porque 0 es falsy para F=0)
           let gradeValue = gradeData
           if (typeof gradeData === 'object' && gradeData !== null) {
-            // 🆕 Si es un objeto, buscar la propiedad que contiene el valor
-            // Prioridad: value > grade > grades[0] > raw > average > el objeto mismo
-            gradeValue = gradeData.value ||
-                        gradeData.grade ||
-                        (gradeData.grades && gradeData.grades[0]) ||
-                        gradeData.raw ||
-                        gradeData.average ||
-                        gradeData
+            if (gradeData.value !== undefined && gradeData.value !== null) {
+              gradeValue = gradeData.value
+            } else if (gradeData.grades && gradeData.grades[0] !== undefined) {
+              gradeValue = gradeData.grades[0]
+            } else if (gradeData.raw !== undefined && gradeData.raw !== null) {
+              gradeValue = gradeData.raw
+            } else if (gradeData.average !== undefined && gradeData.average !== null) {
+              gradeValue = gradeData.average
+            }
           }
 
           // Convertir a string si es número
@@ -652,7 +658,7 @@ export const useTeacherGradesData = () => {
           }
 
           // Solo guardar si hay un valor válido
-          if (gradeValue && gradeValue !== '--' && gradeValue !== null && gradeValue !== '') {
+          if (gradeValue !== undefined && gradeValue !== null && gradeValue !== '--' && gradeValue !== '') {
             // Usar configuración dinámica de system_settings para determinar grading_system
             const gradingSystem = currentGradingSystem
 
@@ -749,15 +755,21 @@ export const useTeacherGradesData = () => {
         throw new Error(`No se encontró la categoría padre para la columna de evaluación. Subcategoría ID: ${evalTypeId}`)
       }
 
-      // Extraer el valor real
+      // Extraer el valor real (prioridad: value > grades[0] > raw)
+      // NO usar || porque 0 es falsy (F=0)
       let gradeValue = value
       if (typeof value === 'object' && value !== null) {
-        gradeValue = value.value ||
-                    value.grade ||
-                    (value.grades && value.grades[0]) ||
-                    value.raw ||
-                    value.average ||
-                    value
+        if (value.value !== undefined && value.value !== null) {
+          gradeValue = value.value
+        } else if (value.grades && value.grades[0] !== undefined) {
+          gradeValue = value.grades[0]
+        } else if (value.raw !== undefined && value.raw !== null) {
+          gradeValue = value.raw
+        } else if (value.grade !== undefined && value.grade !== null) {
+          gradeValue = value.grade
+        } else if (value.average !== undefined && value.average !== null) {
+          gradeValue = value.average
+        }
       }
 
       // Convertir a string si es número
@@ -766,7 +778,7 @@ export const useTeacherGradesData = () => {
       }
 
       // Validar que hay un valor válido
-      if (!gradeValue || gradeValue === '--' || gradeValue === '') {
+      if (gradeValue === undefined || gradeValue === null || gradeValue === '--' || gradeValue === '') {
         return { success: false, message: 'Valor inválido' }
       }
 

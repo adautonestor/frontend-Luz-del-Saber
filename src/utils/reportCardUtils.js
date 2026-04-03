@@ -35,9 +35,7 @@ export const organizeByArea = (gradesData) => {
         bim4: {
           nota: comp.bimestre4,
           conclusion: extractConclusion(comp.notas4)
-        },
-        // Soportar ambos nombres: promedioFinal (nuevo) y promedio (legacy)
-        promedioFinal: comp.promedioFinal ?? comp.promedio
+        }
       })
     })
   })

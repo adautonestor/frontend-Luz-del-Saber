@@ -37,7 +37,6 @@ export const useGradeCalculations = ({
       s.quarter === parseInt(selectedQuarter)
     )
 
-    console.log(`🔄 TeacherGrades - Found evaluation structure:`, structure || 'None configured')
     return structure
   }, [evaluationStructures, selectedCourse, selectedQuarter])
 
@@ -56,10 +55,7 @@ export const useGradeCalculations = ({
 
   // ==================== UNIQUE CATEGORIES (COMPETENCIAS) ====================
   const uniqueCategories = useMemo(() => {
-    console.log('🔄 Building uniqueCategories, selectedCourse:', selectedCourse)
-
     if (!currentEvaluationStructure) {
-      console.log('⚠️ TeacherGrades - No evaluation structure found, using fallback competences')
       // Fallback to default structure if no evaluation structure is configured
       const fallbackCategories = [
         {
@@ -95,7 +91,6 @@ export const useGradeCalculations = ({
           description: 'Capacidad para analizar e interpretar datos'
         }
       ]
-      console.log('📋 Returning fallback competences:', fallbackCategories)
       return fallbackCategories
     }
 
@@ -110,9 +105,6 @@ export const useGradeCalculations = ({
       peso: item.peso,
       description: item.description || ''
     }))
-
-    console.log(`🔄 TeacherGrades - Using configured structure with ${structureCompetences.length} competences:`,
-      structureCompetences.map(c => `${c.nombreCompetencia || c.name} (${c.peso}%)`))
 
     return structureCompetences
   }, [currentEvaluationStructure, selectedCourse])
@@ -140,24 +132,26 @@ export const useGradeCalculations = ({
 
         if (gradingSystem === 'vigesimal' || gradingSystem === 'secundaria') {
           // Sistema vigesimal: calcular promedio numérico
-          const validGrades = competenceGrades.filter(g => g.valor && !isNaN(parseFloat(g.valor)))
+          const validGrades = competenceGrades.filter(g => (g.value || g.valor) && !isNaN(parseFloat(g.value || g.valor)))
           if (validGrades.length > 0) {
-            const sum = validGrades.reduce((acc, g) => acc + parseFloat(g.valor), 0)
+            const sum = validGrades.reduce((acc, g) => acc + parseFloat(g.value || g.valor), 0)
             competenceAverage = sum / validGrades.length
           }
         } else {
           // Sistema literal: convertir a numérico para cálculo
-          // Usa función de conversión dinámica si está disponible, sino valores por defecto
           // Valores consistentes con la configuración central: A=4, B=3, C=2, D=1
           const defaultLetterToNumber = { 'A': 4, 'B': 3, 'C': 2, 'D': 1 }
-          const validGrades = competenceGrades.filter(g => g.valor && (convertLetterToNumeric || defaultLetterToNumber[g.valor]))
+          const validGrades = competenceGrades.filter(g => {
+            const val = g.value || g.valor
+            return val && (convertLetterToNumeric || defaultLetterToNumber[val])
+          })
           if (validGrades.length > 0) {
             const sum = validGrades.reduce((acc, g) => {
-              // Usar conversión dinámica si está disponible
+              const val = g.value || g.valor
               if (convertLetterToNumeric) {
-                return acc + (convertLetterToNumeric(g.valor) || 0)
+                return acc + (convertLetterToNumeric(val) || 0)
               }
-              return acc + (defaultLetterToNumber[g.valor] || 0)
+              return acc + (defaultLetterToNumber[val] || 0)
             }, 0)
             competenceAverage = sum / validGrades.length
           }
@@ -173,9 +167,8 @@ export const useGradeCalculations = ({
     // Si no hay notas, retornar 0
     if (!hasAnyGrade || totalWeight === 0) return 0
 
-    // El promedio ponderado ya está calculado correctamente
-    // No necesitamos dividir nuevamente por totalWeight/100
-    return weightedSum
+    // Normalizar el promedio ponderado por el peso total calificado
+    return weightedSum / (totalWeight / 100)
   }, [uniqueCategories, gradingSystem])
 
   // ==================== GET COMPETENCE AVERAGE ====================
@@ -186,16 +179,17 @@ export const useGradeCalculations = ({
     if (!grades || grades.length === 0) return null
 
     if (gradingSystem === 'vigesimal' || gradingSystem === 'secundaria') {
-      const validGrades = grades.filter(g => g.valor && !isNaN(parseFloat(g.valor)))
+      const validGrades = grades.filter(g => (g.value || g.valor) && !isNaN(parseFloat(g.value || g.valor)))
       if (validGrades.length === 0) return null
 
-      const sum = validGrades.reduce((acc, g) => acc + parseFloat(g.valor), 0)
+      const sum = validGrades.reduce((acc, g) => acc + parseFloat(g.value || g.valor), 0)
       return (sum / validGrades.length).toFixed(2)
     } else {
       // For letter grades, return the most frequent
       const letterCounts = grades.reduce((acc, g) => {
-        if (g.valor) {
-          acc[g.valor] = (acc[g.valor] || 0) + 1
+        const val = g.value || g.valor
+        if (val) {
+          acc[val] = (acc[val] || 0) + 1
         }
         return acc
       }, {})
@@ -210,7 +204,6 @@ export const useGradeCalculations = ({
 
   // ==================== FILTERED STUDENTS ====================
   const filteredStudents = useMemo(() => {
-    console.log('🔄 TeacherGrades - Recalculating filtered students...')
     return students?.filter(student => {
       // Filter by search term
       const matchesSearch = !searchTerm ||
@@ -244,20 +237,6 @@ export const useGradeCalculations = ({
     )
     return grade?.observacion ? true : false
   }, [selectedCourse, selectedQuarter, getGradesByStudentAndCourse])
-
-  // ==================== LOG DATA STATE ====================
-  useMemo(() => {
-    console.log('📚 TeacherGrades - Data state updated:', {
-      students: students?.length || 0,
-      courses: courses?.length || 0,
-      uniqueCategories: uniqueCategories.length,
-      selectedCourse,
-      selectedGrade,
-      selectedSection,
-      filteredStudents: filteredStudents.length
-    })
-  }, [students?.length, courses?.length, uniqueCategories.length,
-      selectedCourse, selectedGrade, selectedSection, filteredStudents.length])
 
   // ==================== RETURN ====================
   return {

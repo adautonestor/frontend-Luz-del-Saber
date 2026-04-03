@@ -23,7 +23,6 @@ export const useGradesStore = create((set, get) => ({
   competencyGrades: [],
   gradeHistory: [],
   studentAverages: [],
-  competencyAverages: [],
   behaviorGrades: [],
   categories: [],
   subcategories: [],
@@ -46,10 +45,9 @@ export const useGradesStore = create((set, get) => ({
     try {
       // Cargar datos desde APIs reales
       // ✅ ACTUALIZADO: Ahora usamos competency-grades exclusivamente (modelo MINEDU)
-      const [grades, quarterAverages, competencyAverages, behaviors, structures] = await Promise.all([
-        gradesService.getAllCompetencyGrades(), // ✅ competency-grades (única fuente de verdad)
+      const [grades, quarterAverages, behaviors, structures] = await Promise.all([
+        gradesService.getAllCompetencyGrades(),
         gradesService.getAllQuarterAverages(),
-        gradesService.getAllCompetencyAverages(),
         gradesService.getAllBehaviors(),
         evaluationStructuresService.getAll()
       ])
@@ -79,7 +77,6 @@ export const useGradesStore = create((set, get) => ({
         competencyGrades: competencyGrades || [],
         gradeHistory: [],
         studentAverages: quarterAverages || [],
-        competencyAverages: competencyAverages || [],
         behaviorGrades: behaviors || [],
         evaluationStructures: formattedStructures || [],
         currentBimester,
@@ -90,7 +87,6 @@ export const useGradesStore = create((set, get) => ({
         grades,
         competencyGrades,
         quarterAverages,
-        competencyAverages,
         behaviors,
         evaluationStructures: formattedStructures
       }
@@ -124,9 +120,6 @@ export const useGradesStore = create((set, get) => ({
         teacher_id: gradeData.teacher_id
       }
 
-      console.log('📤 Datos originales:', gradeData)
-      console.log('📤 Datos transformados para API:', transformedData)
-
       // ✅ Usar directamente createCompetencyGrade (API única)
       const newGrade = await gradesService.createCompetencyGrade(transformedData)
 
@@ -135,8 +128,6 @@ export const useGradesStore = create((set, get) => ({
         competencyGrades: [...state.competencyGrades, newGrade],
         isLoading: false
       }))
-
-      console.log('✅ Grade recorded:', newGrade.id)
 
       return newGrade
     } catch (error) {
@@ -157,7 +148,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Grade updated:', gradeId)
       return updatedGrade
     } catch (error) {
       console.error('❌ Error updating grade:', error)
@@ -177,7 +167,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Grade deleted:', gradeId)
     } catch (error) {
       console.error('❌ Error deleting grade:', error)
       set({ error: error.message, isLoading: false })
@@ -200,7 +189,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Competency grade recorded:', newGrade.id)
       return newGrade
     } catch (error) {
       console.error('❌ Error recording competency grade:', error)
@@ -222,7 +210,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Competency grade updated:', gradeId)
       return updatedGrade
     } catch (error) {
       console.error('❌ Error updating competency grade:', error)
@@ -244,7 +231,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Competency grade deleted from student_grades:', gradeId)
     } catch (error) {
       console.error('❌ Error deleting competency grade:', error)
       set({ error: error.message, isLoading: false })
@@ -266,32 +252,9 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Student average calculated:', average.promedio_parcial || average.promedioParcial)
       return average
     } catch (error) {
       console.error('Error calculating student average:', error)
-      set({ error: error.message, isLoading: false })
-      return null
-    }
-  },
-
-  calculateCompetencyAverage: async (studentId, competencyId, quarter) => {
-    set({ isLoading: true, error: null })
-
-    try {
-      const average = await gradesService.calculateCompetencyAverages(studentId, competencyId, quarter)
-
-      set(state => ({
-        competencyAverages: [...state.competencyAverages.filter(a =>
-          !(a.student_id === studentId && a.competencia_id === competencyId && a.trimestre === quarter)
-        ), average],
-        isLoading: false
-      }))
-
-      console.log('✅ Competency average calculated')
-      return average
-    } catch (error) {
-      console.error('Error calculating competency average:', error)
       set({ error: error.message, isLoading: false })
       return null
     }
@@ -309,7 +272,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Behavior recorded:', newBehavior.id)
       return newBehavior
     } catch (error) {
       console.error('❌ Error recording behavior:', error)
@@ -329,7 +291,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Behavior updated:', behaviorId)
       return updatedBehavior
     } catch (error) {
       console.error('❌ Error updating behavior:', error)
@@ -349,7 +310,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Behavior deleted:', behaviorId)
     } catch (error) {
       console.error('❌ Error deleting behavior:', error)
       set({ error: error.message, isLoading: false })
@@ -372,10 +332,10 @@ export const useGradesStore = create((set, get) => ({
   getCompetencyGrades: (studentId, courseId, competencyId, bimester) => {
     const { competencyGrades } = get()
     return competencyGrades?.filter(grade =>
-      (grade.student_id === studentId || grade.student_id === studentId) &&
-      (grade.course_id === courseId || grade.course_id === courseId) &&
-      (grade.competencia_id === competencyId || grade.competenciaId === competencyId) &&
-      (grade.trimestre === bimester || grade.quarter === bimester)
+      grade.student_id === studentId &&
+      grade.course_id === courseId &&
+      (grade.category_id === competencyId || grade.competencia_id === competencyId || grade.competenciaId === competencyId) &&
+      grade.quarter === bimester
     ) || []
   },
 
@@ -545,7 +505,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Evaluation structure created:', formattedStructure.id)
       return formattedStructure
     } catch (error) {
       console.error('❌ Error creating evaluation structure:', error)
@@ -592,7 +551,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Evaluation structure updated:', id)
       return formattedStructure
     } catch (error) {
       console.error('❌ Error updating evaluation structure:', error)
@@ -617,7 +575,6 @@ export const useGradesStore = create((set, get) => ({
         isLoading: false
       }))
 
-      console.log('✅ Evaluation structure deleted:', id)
     } catch (error) {
       console.error('❌ Error deleting evaluation structure:', error)
       set({ error: error.message, isLoading: false })

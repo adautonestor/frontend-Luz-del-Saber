@@ -131,24 +131,46 @@ const useGradingScalesStore = create((set, get) => ({
     }
 
     const numValue = parseFloat(value)
-    const levelConfig = levelId ? get().getScaleForLevel(levelId) : null
 
-    // Si hay configuración de nivel y es tipo letters
-    if (levelConfig?.type === 'letters' && levelConfig?.scale) {
-      // Ordenar por numericValue descendente
-      const sortedScale = [...levelConfig.scale].sort((a, b) => b.numericValue - a.numericValue)
-
+    // Función auxiliar para convertir usando una escala
+    const convertWithScale = (scale) => {
+      const sortedScale = [...scale].sort((a, b) => b.numericValue - a.numericValue)
       for (const item of sortedScale) {
         if (numValue >= item.numericValue) {
           return item.value
         }
       }
-      // Si es menor que todos, retornar el último
-      return sortedScale[sortedScale.length - 1]?.value || 'D'
+      return sortedScale[sortedScale.length - 1]?.value || null
+    }
+
+    // Si se proporciona levelId, buscar en ese nivel específico
+    if (levelId) {
+      const levelConfig = get().getScaleForLevel(levelId)
+      if (levelConfig?.type === 'letters' && levelConfig?.scale) {
+        const result = convertWithScale(levelConfig.scale)
+        if (result) return result
+      }
+    }
+
+    // Sin levelId: buscar en todos los niveles configurados (prioridad: el que tenga más letras)
+    const { config } = get()
+    if (config?.levels) {
+      // Buscar el nivel con la escala más amplia (para cubrir AD, F, etc.)
+      let bestScale = null
+      let bestScaleLength = 0
+      for (const lvlConfig of Object.values(config.levels)) {
+        if (lvlConfig?.type === 'letters' && lvlConfig?.scale && lvlConfig.scale.length > bestScaleLength) {
+          bestScale = lvlConfig.scale
+          bestScaleLength = lvlConfig.scale.length
+        }
+      }
+      if (bestScale) {
+        const result = convertWithScale(bestScale)
+        if (result) return result
+      }
     }
 
     // Fallback: usar escala por defecto MINEDU
-    // A >= 4, B >= 3, C >= 2, D < 2
     if (numValue >= 4.0) return 'A'
     if (numValue >= 3.0) return 'B'
     if (numValue >= 2.0) return 'C'
@@ -167,21 +189,38 @@ const useGradingScalesStore = create((set, get) => ({
     }
 
     const upperLetter = String(letter).toUpperCase()
-    const levelConfig = levelId ? get().getScaleForLevel(levelId) : null
 
-    // Si hay configuración de nivel
-    if (levelConfig?.type === 'letters' && levelConfig?.scale) {
-      const gradeItem = levelConfig.scale.find(
-        item => item.value.toUpperCase() === upperLetter
-      )
-      if (gradeItem) {
-        return gradeItem.numericValue
+    // Si se proporciona levelId, buscar en ese nivel específico
+    if (levelId) {
+      const levelConfig = get().getScaleForLevel(levelId)
+      if (levelConfig?.type === 'letters' && levelConfig?.scale) {
+        const gradeItem = levelConfig.scale.find(
+          item => item.value.toUpperCase() === upperLetter
+        )
+        if (gradeItem) {
+          return gradeItem.numericValue
+        }
+      }
+    }
+
+    // Sin levelId: buscar en TODOS los niveles configurados
+    const { config } = get()
+    if (config?.levels) {
+      for (const lvlConfig of Object.values(config.levels)) {
+        if (lvlConfig?.type === 'letters' && lvlConfig?.scale) {
+          const gradeItem = lvlConfig.scale.find(
+            item => item.value.toUpperCase() === upperLetter
+          )
+          if (gradeItem) {
+            return gradeItem.numericValue
+          }
+        }
       }
     }
 
     // Fallback: escala por defecto MINEDU
     const defaults = { 'A': 4, 'B': 3, 'C': 2, 'D': 1 }
-    return defaults[upperLetter] || null
+    return defaults[upperLetter] !== undefined ? defaults[upperLetter] : null
   },
 
   /**
@@ -197,19 +236,35 @@ const useGradingScalesStore = create((set, get) => ({
 
     const levelConfig = levelId ? get().getScaleForLevel(levelId) : null
 
-    // Si es letra
-    if (typeof value === 'string' && ['A', 'B', 'C', 'D'].includes(value.toUpperCase())) {
+    // Si es letra - buscar en la configuración del nivel o en todos los niveles
+    if (typeof value === 'string' && isNaN(parseFloat(value))) {
+      const upperVal = value.toUpperCase()
+      // Buscar en el nivel especificado
       if (levelConfig?.type === 'letters' && levelConfig?.scale) {
         const gradeItem = levelConfig.scale.find(
-          item => item.value.toUpperCase() === value.toUpperCase()
+          item => item.value.toUpperCase() === upperVal
         )
         if (gradeItem?.color) {
           return gradeItem.color
         }
       }
+      // Buscar en todos los niveles configurados
+      const { config } = get()
+      if (config?.levels) {
+        for (const lvlConfig of Object.values(config.levels)) {
+          if (lvlConfig?.type === 'letters' && lvlConfig?.scale) {
+            const gradeItem = lvlConfig.scale.find(
+              item => item.value.toUpperCase() === upperVal
+            )
+            if (gradeItem?.color) {
+              return gradeItem.color
+            }
+          }
+        }
+      }
       // Fallback
       const colorMap = { 'A': '#22c55e', 'B': '#3b82f6', 'C': '#eab308', 'D': '#ef4444' }
-      return colorMap[value.toUpperCase()] || '#9ca3af'
+      return colorMap[upperVal] || '#9ca3af'
     }
 
     // Si es numérico
@@ -243,13 +298,17 @@ const useGradingScalesStore = create((set, get) => ({
       return 'bg-gray-100 text-gray-500'
     }
 
-    // Si es letra
-    if (typeof value === 'string') {
-      const upper = value.toUpperCase()
-      if (upper === 'A') return 'bg-green-100 text-green-800'
-      if (upper === 'B') return 'bg-blue-100 text-blue-800'
-      if (upper === 'C') return 'bg-yellow-100 text-yellow-800'
-      if (upper === 'D') return 'bg-red-100 text-red-800'
+    // Si es letra - obtener color del store y mapear a clases CSS
+    if (typeof value === 'string' && isNaN(parseFloat(value))) {
+      const hexColor = get().getGradeColor(value, levelId)
+      const hexToClasses = {
+        '#22c55e': 'bg-green-100 text-green-800',
+        '#3b82f6': 'bg-blue-100 text-blue-800',
+        '#eab308': 'bg-yellow-100 text-yellow-800',
+        '#ef4444': 'bg-red-100 text-red-800',
+        '#9ca3af': 'bg-gray-100 text-gray-500'
+      }
+      return hexToClasses[hexColor] || 'bg-gray-100 text-gray-500'
     }
 
     // Si es numérico, primero convertir a letra
@@ -283,11 +342,12 @@ const useGradingScalesStore = create((set, get) => ({
 
     const levelConfig = levelId ? get().getScaleForLevel(levelId) : null
 
-    // Si es letra
-    if (typeof value === 'string' && ['A', 'B', 'C', 'D'].includes(value.toUpperCase())) {
+    // Si es letra - verificar contra la escala configurada
+    if (typeof value === 'string' && isNaN(parseFloat(value))) {
       const numericValue = get().convertLetterToNumeric(value, levelId)
+      if (numericValue === null) return false
       const passingNumeric = levelConfig?.passingNumericValue || 3 // B por defecto
-      return numericValue !== null && numericValue >= passingNumeric
+      return numericValue >= passingNumeric
     }
 
     // Si es numérico
@@ -321,13 +381,14 @@ const useGradingScalesStore = create((set, get) => ({
 
     // Si es sistema literal
     if (gradingSystem === 'literal') {
-      // Si ya es letra, retornarla
-      if (typeof value === 'string' && ['A', 'B', 'C', 'D'].includes(value.toUpperCase())) {
-        return value.toUpperCase()
+      // Si es string, verificar si es una letra válida en la escala configurada
+      if (typeof value === 'string') {
+        const numericValue = get().convertLetterToNumeric(value, levelId)
+        if (numericValue !== null) return value.toUpperCase()
       }
-      // Si es número (valor de promedio 0-4), convertir a letra
+      // Si es número (valor de promedio), convertir a letra
       const numValue = parseFloat(value)
-      if (!isNaN(numValue) && numValue >= 0 && numValue <= 4) {
+      if (!isNaN(numValue)) {
         return get().convertNumericToLetter(numValue, levelId)
       }
       return '--'

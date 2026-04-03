@@ -102,14 +102,6 @@ const generateCourseSheetData = (curso, child, year, bimestreFilter) => {
     }
   })
 
-  sheetData.push([])
-  if (isAnual) {
-    sheetData.push(['PROMEDIO FINAL DEL CURSO', '', '', '', '', curso.promedioFinal || '-'])
-    sheetData.push(['N° DE COMPETENCIAS DESAPROBADAS', '', '', '', '', curso.competenciasDesaprobadas || 0])
-  } else {
-    sheetData.push(['PROMEDIO FINAL DEL CURSO', '', curso.promedioFinal || '-'])
-  }
-
   return sheetData
 }
 

@@ -58,7 +58,7 @@ export const FinalReportCardDocument = ({ studentData, gradesData, year = new Da
         <ReportCardAttendanceTable attendanceData={studentData?.attendanceData || {}} />
 
         {/* Footer: Situación final + Firmas + Fecha de emisión */}
-        <ReportCardFooter gradesData={gradesData} gradingSystem={gradingSystem} />
+        <ReportCardFooter />
       </Page>
     </Document>
   )

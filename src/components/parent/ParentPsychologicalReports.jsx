@@ -110,6 +110,18 @@ export default function ParentPsychologicalReports() {
     return years;
   };
 
+  // Helper para formatear nombre completo del estudiante
+  const formatStudentName = (child, format = 'full') => {
+    const nombres = [child.first_names, child.last_names].filter(Boolean).join(' ');
+    const apellidos = [child.paternal_last_name, child.maternal_last_name].filter(Boolean).join(' ');
+
+    if (format === 'apellidos-nombres') {
+      return apellidos ? `${apellidos}, ${nombres}` : nombres;
+    }
+    // format === 'full': Nombres Apellidos
+    return apellidos ? `${nombres} ${apellidos}` : nombres;
+  };
+
   const selectedChildData = children.find(c => c.id === selectedChild);
   const childReports = selectedChild ? getChildReports(selectedChild) : [];
   const currentYearReport = selectedChild ? getReportForYear(selectedChild, selectedYear) : null;
@@ -166,7 +178,7 @@ export default function ParentPsychologicalReports() {
                   >
                     {children.map(child => (
                       <option key={child.id} value={child.id}>
-                        {child.last_names}, {child.first_names} - {child.grade_name || ''} {child.section_name || ''}
+                        {formatStudentName(child, 'apellidos-nombres')} - {child.grade_name || ''} {child.section_name || ''}
                       </option>
                     ))}
                   </select>
@@ -196,11 +208,11 @@ export default function ParentPsychologicalReports() {
               <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl shadow-sm p-6 text-white">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-green-600 font-bold text-xl">
-                    {selectedChildData.first_names?.charAt(0)}{selectedChildData.last_names?.charAt(0)}
+                    {selectedChildData.first_names?.charAt(0)}{(selectedChildData.paternal_last_name || selectedChildData.first_names)?.charAt(0)}
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">
-                      {selectedChildData.first_names} {selectedChildData.last_names}
+                      {formatStudentName(selectedChildData)}
                     </h2>
                     <p className="text-green-100">
                       {selectedChildData.level_name || ''} - {selectedChildData.grade_name || ''} {selectedChildData.section_name || ''} | DNI: {selectedChildData.dni}

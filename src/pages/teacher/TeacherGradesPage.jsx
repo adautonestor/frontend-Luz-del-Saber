@@ -54,20 +54,15 @@ const TeacherGradesPage = () => {
   // Navegación entre celdas para compatibilidad con ExcelGradeCell
   const handleCellNavigation = (studentIndex, evalTypeIndex, direction) => {
     // Esta función se mantiene por compatibilidad pero no se usa actualmente
-    console.log('Cell navigation:', { studentIndex, evalTypeIndex, direction })
   }
 
   // Wrapper para handleGradeChange con notificaciones toast
   const handleGradeChangeWithToast = async (studentId, evalTypeId, value) => {
-    console.log('🟡 handleGradeChangeWithToast LLAMADO:', { studentId, evalTypeId, value })
-
     // Mostrar toast de carga
     const loadingToast = toast.loading('Guardando nota...')
-    console.log('🟡 Toast de carga mostrado')
 
     try {
       // Llamar a la función original que ahora guarda inmediatamente
-      console.log('🟡 Llamando a gradeData.handleGradeChange...')
       await gradeData.handleGradeChange(studentId, evalTypeId, value)
 
       // Esperar un momento para que se complete el guardado
@@ -75,7 +70,6 @@ const TeacherGradesPage = () => {
 
       // Cerrar toast de carga y mostrar éxito
       toast.dismiss(loadingToast)
-      console.log('🟡 Mostrando toast de éxito')
       toast.success('Nota registrada correctamente', {
         duration: 2000,
         position: 'top-center',

@@ -233,47 +233,6 @@ export const gradesService = {
     }
   },
 
-  /**
-   * Obtener todos los promedios por competencias
-   * @param {Object} filters - Filtros opcionales
-   * @returns {Promise<Array>} Lista de promedios
-   */
-  async getAllCompetencyAverages(filters = {}) {
-    try {
-      const queryParams = new URLSearchParams()
-      Object.keys(filters).forEach(key => {
-        if (filters[key]) queryParams.append(key, filters[key])
-      })
-      const queryString = queryParams.toString()
-      const endpoint = queryString ? `/competency-averages?${queryString}` : '/competency-averages'
-
-      const response = await get(endpoint)
-      return response.promedios || response.data || response
-    } catch (error) {
-      console.error('Error al obtener promedios por competencias:', error)
-      throw error
-    }
-  },
-
-  /**
-   * Calcular promedios por competencias para un estudiante
-   * @param {number} studentId - ID del estudiante
-   * @param {number} quarter - Número del bimestre
-   * @returns {Promise<Array>} Promedios calculados
-   */
-  async calculateCompetencyAverages(studentId, quarter) {
-    try {
-      const response = await post('/competency-averages/calculate', {
-        student_id: studentId,
-        quarter: quarter
-      })
-      return response.promedios || response.data || response
-    } catch (error) {
-      console.error('Error al calcular promedios por competencias:', error)
-      throw error
-    }
-  },
-
   // ========== BOLETA DE NOTAS ==========
 
   /**

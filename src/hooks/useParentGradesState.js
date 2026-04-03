@@ -45,24 +45,27 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
     }
   }
 
+  // Función auxiliar para buscar competencia en la estructura de evaluación
+  const findCompetenciaInStructure = (courseId, categoryId) => {
+    const structure = evaluationStructuresMap[courseId]
+    if (!structure || !structure.competencies) return null
+
+    const competencias = structure.competencies.competencias || structure.competencies
+    if (!Array.isArray(competencias)) return null
+
+    for (let i = 0; i < competencias.length; i++) {
+      const comp = competencias[i]
+      const compId = comp.id || `COMP_${(comp.nombreCompetencia || comp.name || '').replace(/\s+/g, '_').toUpperCase()}`
+      if (compId === categoryId) {
+        return { ...comp, _structureIndex: i }
+      }
+    }
+    return null
+  }
+
   // Función auxiliar para buscar nombre de subcategoría
   const getSubcategoryName = (courseId, categoryId, subcategoryId) => {
-    const structure = evaluationStructuresMap[courseId]
-    if (!structure || !structure.competencies) {
-      return `Evaluación ${subcategoryId}`
-    }
-
-    // Buscar en el formato {competencias: [...]}
-    const competencias = structure.competencies.competencias || structure.competencies
-    if (!Array.isArray(competencias)) {
-      return `Evaluación ${subcategoryId}`
-    }
-
-    // Buscar la competencia que coincida con categoryId
-    const competencia = competencias.find(comp => {
-      const compId = comp.id || `COMP_${(comp.nombreCompetencia || comp.name || '').replace(/\s+/g, '_').toUpperCase()}`
-      return compId === categoryId
-    })
+    const competencia = findCompetenciaInStructure(courseId, categoryId)
 
     if (!competencia || !competencia.subcategorias) {
       return `Evaluación ${subcategoryId}`
@@ -76,6 +79,9 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
 
     return `Evaluación ${subcategoryId}`
   }
+
+  // Literales válidos del sistema MINEDU
+  const VALID_LITERAL_GRADES = ['AD', 'A', 'B', 'C', 'D']
 
   // Agrupar calificaciones por curso y competencia
   const courseMap = {}
@@ -126,14 +132,24 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
       courseMap[courseId].observations.push(grade.observation)
     }
 
-    // Crear estructura de competencias
+    // Crear estructura de competencias usando nombre y orden de la estructura de evaluación
     if (!courseMap[courseId].competencias[categoryId]) {
+      const structComp = findCompetenciaInStructure(courseId, categoryId)
+      const fallbackIndex = Object.keys(courseMap[courseId].competencias).length
+      const compOrder = structComp
+        ? (structComp.numero !== undefined ? structComp.numero : structComp._structureIndex + 1)
+        : fallbackIndex + 1
+      const compName = structComp
+        ? (structComp.nombreCompetencia || structComp.name || `Competencia ${compOrder}`)
+        : `Competencia ${fallbackIndex + 1}`
+
       courseMap[courseId].competencias[categoryId] = {
         id: categoryId,
-        name: `Competencia ${Object.keys(courseMap[courseId].competencias).length + 1}`,
+        name: compName,
+        order: compOrder,
         average: null,
         grades: [],
-        color: getCompetenciaColor(Object.keys(courseMap[courseId].competencias).length)
+        color: getCompetenciaColor(compOrder - 1)
       }
     }
 
@@ -145,21 +161,41 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
 
     // Obtener el peso de la estructura de evaluación
     let weight = 0
-    const structure = evaluationStructuresMap[courseId]
-    if (structure && structure.competencies) {
-      const competencias = structure.competencies.competencias || structure.competencies
-      if (Array.isArray(competencias)) {
-        const competencia = competencias.find(comp => {
-          const compId = comp.id || `COMP_${(comp.nombreCompetencia || comp.name || '').replace(/\s+/g, '_').toUpperCase()}`
-          return compId === categoryId
-        })
-        if (competencia && competencia.subcategorias) {
-          const subcategoria = competencia.subcategorias.find(sub => sub.id === subcategoryId)
-          if (subcategoria && subcategoria.peso !== undefined) {
-            weight = subcategoria.peso
+    const structComp2 = findCompetenciaInStructure(courseId, categoryId)
+    if (structComp2 && structComp2.subcategorias) {
+      const subcategoria = structComp2.subcategorias.find(sub => sub.id === subcategoryId)
+      if (subcategoria && subcategoria.peso !== undefined) {
+        weight = subcategoria.peso
+      }
+    }
+
+    // Resolver display de nota
+    let resolvedGradeValue = gradeValue
+    let gradeDisplay
+    if (gradingSystem === 'literal') {
+      const rawValue = String(originalValue || '').trim()
+      if (rawValue) {
+        // Mostrar el valor exacto que el profesor ingresó (F, AD, A, B, C, D, etc.)
+        gradeDisplay = rawValue.toUpperCase()
+        // Para literales estándar, usar conversión numérica; para otros, mantener gradeValue
+        if (VALID_LITERAL_GRADES.includes(gradeDisplay)) {
+          resolvedGradeValue = convertGradeToNumeric(originalValue, gradingSystem)
+        }
+      } else {
+        // Sin valor — intentar obtener de los detalles del promedio calculado
+        gradeDisplay = null
+        const avgKey = `${courseId}_${categoryId}`
+        const avgData = averagesMap[avgKey]
+        if (avgData?.calculation_details?.subcategories) {
+          const subDetail = avgData.calculation_details.subcategories.find(s => s.name === subcategoryName)
+          if (subDetail) {
+            gradeDisplay = subDetail.gradeDisplay || null
+            if (subDetail.grade !== undefined) resolvedGradeValue = subDetail.grade
           }
         }
       }
+    } else {
+      gradeDisplay = gradeValue
     }
 
     // Crear evaluación individual
@@ -167,8 +203,8 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
       id: grade.id,
       name: subcategoryName,
       competenciaId: categoryId,
-      grade: gradeValue,
-      gradeDisplay: gradingSystem === 'literal' ? String(originalValue).toUpperCase() : gradeValue, // Mostrar letra o número
+      grade: resolvedGradeValue,
+      gradeDisplay: gradeDisplay,
       gradingSystem: gradingSystem,
       registration_date: grade.registration_date || grade.date_time_registration,
       comment: grade.observation || null,
@@ -181,7 +217,10 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
   // Calcular promedios por curso y crear array de subjects
   const subjects = Object.values(courseMap).map(course => {
     // Usar promedios del backend en lugar de calcular en frontend
-    const competenciasArray = Object.values(course.competencias).map(comp => {
+    // Ordenar competencias según el orden de la estructura de evaluación (numero)
+    const competenciasArray = Object.values(course.competencias)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(comp => {
       const averageKey = `${course.id}_${comp.id}`
       const backendAverage = averagesMap[averageKey]
 
@@ -210,6 +249,13 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
       }
     })
 
+    // Filtrar evaluaciones huérfanas (subcategorías eliminadas de la estructura)
+    const filteredEvaluations = course.evaluations.filter(ev => {
+      // Evaluaciones con nombre "Evaluación CUSTOM_..." son huérfanas (sin subcategoría en estructura)
+      if (ev.name.startsWith('Evaluación ') && ev.weight === 0) return false
+      return true
+    })
+
     return {
       ...course,
       trend: 'stable', // TODO: Calcular tendencia comparando con bimestres anteriores
@@ -217,7 +263,8 @@ const transformGradesToSubjects = (gradesArray, evaluationStructuresMap = {}, av
       observations: course.observations.length > 0
         ? course.observations.join(' | ')
         : null,
-      competencias: competenciasArray // Convertir objeto a array
+      competencias: competenciasArray, // Convertir objeto a array
+      evaluations: filteredEvaluations // Evaluaciones limpias sin huérfanas
     }
   })
 

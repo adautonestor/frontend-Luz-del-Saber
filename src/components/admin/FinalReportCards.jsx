@@ -13,9 +13,7 @@ import courseService from '../../services/academic/courseService'
 import evaluationStructuresService from '../../services/evaluationStructuresService'
 import studentBehaviorsService from '../../services/studentBehaviorsService'
 import {
-  convertAverageValueToLetter,
-  convertLetterToAverageValue,
-  calculateFinalCourseAverage
+  convertAverageValueToLetter
 } from '../../utils/gradeConversion'
 import { getGradingScalesStore } from '../../stores/gradingScalesStore'
 import { attendanceService } from '../../services/attendanceService'
@@ -220,47 +218,6 @@ const FinalReportCards = () => {
         return letterValue
       }
 
-      // Función para calcular el promedio de una competencia (igual que dataTransformers.js)
-      const calculateCompetencyAverage = (bimesters, isNumeric) => {
-        const validGrades = bimesters.filter(g => g !== null)
-        if (validGrades.length === 0) return null
-
-        if (isNumeric || typeof validGrades[0] === 'number') {
-          // Sistema numérico: promedio directo
-          const sum = validGrades.reduce((acc, g) => acc + (typeof g === 'number' ? g : parseFloat(g)), 0)
-          return Math.round((sum / validGrades.length) * 100) / 100
-        } else {
-          // Sistema literal: convertir a numérico, promediar, reconvertir
-          const numericValues = validGrades
-            .map(g => convertLetterToAverageValue(g, levelId))
-            .filter(v => v !== null)
-
-          if (numericValues.length === 0) return null
-
-          const avgNumeric = numericValues.reduce((acc, v) => acc + v, 0) / numericValues.length
-          return convertAverageValueToLetter(avgNumeric, levelId)
-        }
-      }
-
-      // Función para calcular el promedio final del curso (igual que dataTransformers.js)
-      const calculateCourseAverage = (competenciasConNotas, isNumeric) => {
-        const competencyAverages = competenciasConNotas
-          .map(c => c.promedioFinal)
-          .filter(p => p !== null)
-
-        if (competencyAverages.length === 0) return null
-
-        if (isNumeric || typeof competencyAverages[0] === 'number') {
-          // Sistema numérico
-          const sum = competencyAverages.reduce((acc, p) => acc + (typeof p === 'number' ? p : parseFloat(p)), 0)
-          return Math.round((sum / competencyAverages.length) * 100) / 100
-        } else {
-          // Sistema literal - usar función centralizada
-          const result = calculateFinalCourseAverage(competencyAverages, levelId)
-          return result.letter
-        }
-      }
-
       // Construir estructura de boleta
       const boletaStructure = studentCourses.map(course => {
         // Buscar estructuras de evaluación para este curso Y grado del estudiante
@@ -332,26 +289,18 @@ const FinalReportCards = () => {
             }
           }
 
-          // Calcular promedio anual de la competencia (IGUAL que dataTransformers.js)
-          const promedioFinal = calculateCompetencyAverage(bimesters, isNumericSystem)
-
           return {
             name: competencia.nombreCompetencia || competencia.name || `Competencia ${competencia.numero}`,
             bimestre1: bimesters[0],
             bimestre2: bimesters[1],
             bimestre3: bimesters[2],
-            bimestre4: bimesters[3],
-            promedioFinal
+            bimestre4: bimesters[3]
           }
         })
 
-        // Calcular promedio final del curso (IGUAL que dataTransformers.js)
-        const promedioFinalCurso = calculateCourseAverage(competenciasConNotas, isNumericSystem)
-
         return {
           cursoNombre: course.name,
-          competencias: competenciasConNotas,
-          promedioFinal: promedioFinalCurso
+          competencias: competenciasConNotas
         }
       }).filter(c => c && c.competencias.length > 0)
 

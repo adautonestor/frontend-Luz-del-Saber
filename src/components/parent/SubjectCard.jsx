@@ -18,7 +18,7 @@ const SubjectCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="card overflow-hidden"
+      className="card"
     >
       <div
         className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -85,7 +85,7 @@ const SubjectCard = ({
                   )
 
                   return (
-                    <div key={compIdx} className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div key={compIdx} className="border border-gray-200 rounded-lg overflow-visible">
                       {/* Competencia Header */}
                       <div className={`px-4 py-3 ${competencia.color} bg-opacity-10 border-b border-gray-200`}>
                         <div className="flex items-center justify-between">
@@ -124,24 +124,26 @@ const SubjectCard = ({
                                 <tr key={idx} className="hover:bg-gray-50">
                                   <td className="px-4 py-2 text-sm font-medium text-gray-900">{evaluation.name}</td>
                                   <td className={`px-4 py-2 text-center text-sm font-semibold ${
-                                    evaluation.grade !== null && evaluation.grade !== 0 ? getGradeColor(evaluation.grade) : 'text-gray-400'
+                                    evaluation.gradeDisplay || (evaluation.grade !== null && evaluation.grade !== 0)
+                                      ? getGradeColor(evaluation.gradeDisplay || evaluation.grade)
+                                      : 'text-gray-400'
                                   }`}>
-                                    {evaluation.grade !== null && evaluation.grade !== 0 ? (evaluation.gradeDisplay || evaluation.grade) : '-'}
+                                    {evaluation.gradeDisplay || (evaluation.grade !== null && evaluation.grade !== 0 ? evaluation.grade : '-')}
                                   </td>
                                   <td className="px-4 py-2 text-center text-sm text-gray-600">
                                     {evaluation.registration_date ? formatDate(evaluation.registration_date) : '-'}
                                   </td>
-                                  <td className="px-4 py-2 text-sm text-gray-600 max-w-xs">
+                                  <td className="px-4 py-2 text-sm text-gray-600 max-w-xs overflow-visible">
                                     {evaluation.comment ? (
                                       <div className="group relative">
                                         <div className="flex items-center gap-2">
                                           <FileText className="w-4 h-4 text-blue-500" />
                                           <span className="text-blue-600 font-medium cursor-help">Ver comentario</span>
                                         </div>
-                                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg">
+                                        <div className="absolute top-full left-0 mt-2 hidden group-hover:block z-50 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg">
+                                          <div className="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-800"></div>
                                           <div className="mb-1 font-semibold text-blue-200">Comentario del profesor:</div>
                                           {evaluation.comment}
-                                          <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                                         </div>
                                       </div>
                                     ) : (

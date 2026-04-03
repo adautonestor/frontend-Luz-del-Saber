@@ -28,9 +28,6 @@ const TableHeader = () => (
       <View style={[styles.headerCell, { width: 95 }]}>
         <Text>{PERIODOS.BIMESTRE_4}</Text>
       </View>
-      <View style={[styles.headerCellNoBorder, { width: 35 }]}>
-        <Text>NL Final</Text>
-      </View>
     </View>
 
     {/* Subheader con NL y Conclusión */}
@@ -54,8 +51,6 @@ const TableHeader = () => (
       <View style={[styles.subHeaderCell, { width: 18 }]}><Text>NL</Text></View>
       <View style={[styles.subHeaderCell, { width: 77 }]}><Text>Conclusión descriptiva</Text></View>
 
-      {/* NL Final */}
-      <View style={[styles.subHeaderCell, { width: 35, borderRight: 'none' }]}><Text></Text></View>
     </View>
   </>
 )
@@ -102,10 +97,6 @@ const CompetenciaRow = ({ comp, ROW_HEIGHT }) => (
       <Text>{comp.bim4.conclusion}</Text>
     </View>
 
-    {/* NL Final */}
-    <View style={styles.finalGradeCellInner}>
-      <Text>{comp.promedioFinal || ''}</Text>
-    </View>
   </View>
 )
 
@@ -167,10 +158,6 @@ const FullCompetenciaRow = ({ areaName, comp, isFirst, isLast, ROW_HEIGHT }) => 
       <Text>{comp.bim4.conclusion}</Text>
     </View>
 
-    {/* NL Final */}
-    <View style={styles.finalGradeCellInner}>
-      <Text>{comp.promedioFinal || ''}</Text>
-    </View>
   </View>
 )
 
