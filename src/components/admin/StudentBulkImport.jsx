@@ -58,6 +58,23 @@ const StudentBulkImport = ({ isOpen, onClose }) => {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Estudiantes')
 
+    // Forzar las celdas de DNI, Fecha y Teléfono como texto para que Excel
+    // no las auto-convierta a número/fecha (preserva ceros a la izquierda
+    // y formato YYYY-MM-DD legible para nuestro parser).
+    const range = XLSX.utils.decode_range(ws['!ref'])
+    // Columnas (índice 0): C=DNI Estudiante, D=Fecha Nac, G=Teléfono, H=DNI Padre
+    const textColumns = [2, 3, 6, 7]
+    for (let R = range.s.r + 1; R <= range.e.r; R++) {
+      for (const C of textColumns) {
+        const cellAddr = XLSX.utils.encode_cell({ r: R, c: C })
+        const cell = ws[cellAddr]
+        if (cell) {
+          cell.t = 's' // string
+          cell.z = '@' // formato texto
+        }
+      }
+    }
+
     // Ajustar anchos de columna
     const colWidths = [
       { wch: 20 }, // Nombres
@@ -84,16 +101,89 @@ const StudentBulkImport = ({ isOpen, onClose }) => {
     }
   }
 
+  // Convierte cualquier representación de fecha (Date object, serial Excel, string)
+  // a formato YYYY-MM-DD que es lo que espera el backend (Postgres DATE).
+  // Devuelve null si no es una fecha válida.
+  const normalizeDate = (raw) => {
+    if (raw === null || raw === undefined || raw === '') return null
+
+    // Caso 1: Date object (cuando XLSX.read se llama con cellDates: true)
+    if (raw instanceof Date) {
+      if (isNaN(raw.getTime())) return null
+      // Usar componentes locales para evitar desfase por zona horaria
+      const y = raw.getFullYear()
+      const m = String(raw.getMonth() + 1).padStart(2, '0')
+      const d = String(raw.getDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
+    }
+
+    // Caso 2: número serial de Excel (días desde 1900-01-01, con bug de Lotus)
+    if (typeof raw === 'number') {
+      const parsed = XLSX.SSF.parse_date_code(raw)
+      if (!parsed) return null
+      const y = parsed.y
+      const m = String(parsed.m).padStart(2, '0')
+      const d = String(parsed.d).padStart(2, '0')
+      return `${y}-${m}-${d}`
+    }
+
+    // Caso 3: string. Aceptar YYYY-MM-DD directo o intentar parsear.
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim()
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+      // Soportar DD/MM/YYYY o D/M/YYYY (formato común en Perú)
+      const dmy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+      if (dmy) {
+        const d = dmy[1].padStart(2, '0')
+        const m = dmy[2].padStart(2, '0')
+        const y = dmy[3]
+        return `${y}-${m}-${d}`
+      }
+      // Intento final: dejar que Date lo parsee
+      const parsed = new Date(trimmed)
+      if (!isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear()
+        const mm = String(parsed.getMonth() + 1).padStart(2, '0')
+        const dd = String(parsed.getDate()).padStart(2, '0')
+        return `${y}-${mm}-${dd}`
+      }
+    }
+
+    return null
+  }
+
+  // Normaliza el DNI: convierte a string, elimina espacios, y rellena con
+  // ceros a la izquierda hasta 8 dígitos (Excel pierde los ceros si la celda es número).
+  const normalizeDni = (raw) => {
+    if (raw === null || raw === undefined || raw === '') return ''
+    const str = String(raw).trim().replace(/\s+/g, '')
+    // Solo dígitos
+    if (!/^\d+$/.test(str)) return str
+    if (str.length < 8) return str.padStart(8, '0')
+    return str
+  }
+
+  // Normaliza el género a 'M' o 'F'. Acepta variantes: M/F, m/f, Masculino/Femenino, Hombre/Mujer.
+  const normalizeGender = (raw) => {
+    if (!raw) return null
+    const str = String(raw).trim().toUpperCase()
+    if (str === 'M' || str === 'MASCULINO' || str === 'HOMBRE') return 'M'
+    if (str === 'F' || str === 'FEMENINO' || str === 'MUJER') return 'F'
+    return null
+  }
+
   const processFile = async (file) => {
     const reader = new FileReader()
 
     reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target.result)
-        const workbook = XLSX.read(data, { type: 'array' })
+        // cellDates: true → Excel convierte celdas tipo fecha a Date objects.
+        // raw: false en sheet_to_json hace que valores se devuelvan ya formateados.
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: false, cellText: false })
         const sheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[sheetName]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet)
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true })
 
         // Obtener todos los padres registrados
         let todosLosPadres = []
@@ -145,36 +235,60 @@ const StudentBulkImport = ({ isOpen, onClose }) => {
         // Validar y mapear datos
         const processedData = []
         const validationErrors = []
+        const dnisVistosEnArchivo = new Map() // dni → fila donde apareció primero
 
         jsonData.forEach((row, index) => {
           const rowNum = index + 2 // +2 porque Excel empieza en 1 y hay header
 
           // Validaciones básicas del estudiante
-          if (!row['Nombres']) {
+          const nombres = row['Nombres'] ? String(row['Nombres']).trim() : ''
+          if (!nombres) {
             validationErrors.push(`Fila ${rowNum}: El campo "Nombres" es obligatorio`)
             return
           }
 
-          if (!row['Apellidos']) {
+          const apellidos = row['Apellidos'] ? String(row['Apellidos']).trim() : ''
+          if (!apellidos) {
             validationErrors.push(`Fila ${rowNum}: El campo "Apellidos" es obligatorio`)
             return
           }
 
-          const dniEstudiante = row['DNI Estudiante']?.toString() || ''
-          if (!dniEstudiante || dniEstudiante.length !== 8) {
-            validationErrors.push(`Fila ${rowNum}: DNI del estudiante debe tener 8 dígitos`)
+          const dniEstudiante = normalizeDni(row['DNI Estudiante'])
+          if (!dniEstudiante || dniEstudiante.length !== 8 || !/^\d{8}$/.test(dniEstudiante)) {
+            validationErrors.push(`Fila ${rowNum}: DNI del estudiante debe tener exactamente 8 dígitos numéricos (recibido: "${row['DNI Estudiante']}")`)
+            return
+          }
+
+          // Detectar DNI duplicado dentro del mismo archivo
+          if (dnisVistosEnArchivo.has(dniEstudiante)) {
+            validationErrors.push(`Fila ${rowNum}: DNI ${dniEstudiante} está duplicado en el archivo (ya aparece en la fila ${dnisVistosEnArchivo.get(dniEstudiante)})`)
+            return
+          }
+          dnisVistosEnArchivo.set(dniEstudiante, rowNum)
+
+          // Validar fecha de nacimiento
+          const birthDate = normalizeDate(row['Fecha de Nacimiento'])
+          if (!birthDate) {
+            validationErrors.push(`Fila ${rowNum}: Fecha de Nacimiento inválida o vacía. Use formato YYYY-MM-DD o DD/MM/YYYY (recibido: "${row['Fecha de Nacimiento']}")`)
+            return
+          }
+
+          // Validar género
+          const gender = normalizeGender(row['Sexo (M/F)'])
+          if (!gender) {
+            validationErrors.push(`Fila ${rowNum}: El campo "Sexo (M/F)" debe ser M o F (recibido: "${row['Sexo (M/F)']}")`)
             return
           }
 
           // Validar DNI del padre
-          const dniPadre = row['DNI Padre/Tutor']?.toString() || ''
+          const dniPadre = normalizeDni(row['DNI Padre/Tutor'])
           if (!dniPadre) {
             validationErrors.push(`Fila ${rowNum}: DNI del Padre/Tutor es obligatorio`)
             return
           }
 
-          // Buscar padre en la lista de padres
-          const padre = todosLosPadres.find(p => p.dni === dniPadre)
+          // Buscar padre en la lista de padres (compara como string normalizado)
+          const padre = todosLosPadres.find(p => normalizeDni(p.dni) === dniPadre)
 
           if (!padre) {
             validationErrors.push(`Fila ${rowNum}: No se encontró un padre/tutor registrado con DNI ${dniPadre}. Por favor, registre primero al padre en el sistema.`)
@@ -182,7 +296,7 @@ const StudentBulkImport = ({ isOpen, onClose }) => {
           }
 
           // Verificar si el estudiante ya existe en la DB (por DNI)
-          const estudianteExistente = estudiantesExistentes.find(e => e.dni === dniEstudiante)
+          const estudianteExistente = estudiantesExistentes.find(e => normalizeDni(e.dni) === dniEstudiante)
           const isUpdate = !!estudianteExistente
 
           // Verificar si el estudiante tiene matrícula activa en año vigente
@@ -190,31 +304,35 @@ const StudentBulkImport = ({ isOpen, onClose }) => {
 
           // Si tiene matrícula activa, NO se puede actualizar por importación
           if (tieneMatriculaActiva) {
-            const nombreCompleto = `${row['Nombres']} ${row['Apellidos']}`
+            const nombreCompleto = `${nombres} ${apellidos}`
             validationErrors.push(`Fila ${rowNum}: El estudiante "${nombreCompleto}" (DNI: ${dniEstudiante}) está matriculado en el año lectivo vigente y no puede ser modificado por importación.`)
             return
           }
 
           // Separar apellidos (Apellido Paterno y Apellido Materno)
-          const apellidos = row['Apellidos']?.toString().trim() || ''
-          const apellidosSplit = apellidos.split(' ')
+          const apellidosSplit = apellidos.split(/\s+/)
           const paternal_last_name = apellidosSplit[0] || apellidos
           const maternal_last_name = apellidosSplit.slice(1).join(' ') || ''
+
+          // Normalizar teléfono (Excel puede venir como número)
+          const phone = row['Teléfono'] !== undefined && row['Teléfono'] !== null && row['Teléfono'] !== ''
+            ? String(row['Teléfono']).trim()
+            : null
 
           // Mapear datos del estudiante AL FORMATO DE LA API
           const studentData = {
             // Campos obligatorios
             barcode: dniEstudiante, // El código de barras es el mismo DNI
-            first_names: row['Nombres'],
+            first_names: nombres,
             last_names: paternal_last_name, // last_names es el apellido paterno principal
             paternal_last_name: paternal_last_name,
             maternal_last_name: maternal_last_name,
             dni: dniEstudiante,
             document_type: 'DNI',
-            birth_date: row['Fecha de Nacimiento'],
-            gender: row['Sexo (M/F)'] || 'M',
-            address: row['Dirección'] || '',
-            phone: row['Teléfono']?.toString() || null,
+            birth_date: birthDate, // Ya normalizado a YYYY-MM-DD
+            gender: gender, // Ya normalizado a M o F
+            address: row['Dirección'] ? String(row['Dirección']).trim() : '',
+            phone: phone,
             parent_id: padre.id, // El backend convertirá esto a JSON parents
             has_double_shift: false,
             status: 'active',
@@ -345,6 +463,9 @@ const StudentBulkImport = ({ isOpen, onClose }) => {
                 <li><strong>PRIMERO:</strong> Asegúrese de que todos los padres/tutores estén registrados en el sistema (Usuarios → Nuevo Usuario → Rol: Padre)</li>
                 <li>Descargue la plantilla de Excel con el formato correcto</li>
                 <li>Complete los datos de los estudiantes en la plantilla</li>
+                <li><strong>Fecha de Nacimiento:</strong> Use el formato <code>YYYY-MM-DD</code> (ej: 2010-05-15) o <code>DD/MM/YYYY</code> (ej: 15/05/2010)</li>
+                <li><strong>Sexo:</strong> Acepta <code>M</code>, <code>F</code>, Masculino o Femenino</li>
+                <li><strong>DNI:</strong> Debe tener 8 dígitos. Si Excel quita ceros a la izquierda, formatee la celda como Texto.</li>
                 <li><strong>Importante:</strong> En la columna "DNI Padre/Tutor", coloque el DNI del padre que YA está registrado en el sistema</li>
                 <li>El sistema vinculará automáticamente al estudiante con el padre usando el DNI</li>
                 <li>Si un DNI de padre no se encuentra, se mostrará un error y NO se importará ese estudiante</li>

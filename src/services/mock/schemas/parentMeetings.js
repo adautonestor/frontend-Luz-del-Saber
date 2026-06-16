@@ -2,6 +2,7 @@
  * Utilidades para procesamiento de reuniones de padres
  * Funciones para calcular resúmenes de asistencia a reuniones
  */
+import { parseDateOnly } from '../../../utils/dateUtils'
 
 /**
  * Obtener resumen de asistencia a reuniones de padres para un estudiante
@@ -101,8 +102,8 @@ export const getPendingMeetings = (meetings, attendances, studentId) => {
   const now = new Date()
 
   return meetings.filter(meeting => {
-    const meetingDate = new Date(meeting.date || meeting.fecha)
-    const isPast = meetingDate < now
+    const meetingDate = parseDateOnly(meeting.date || meeting.fecha)
+    const isPast = meetingDate && meetingDate.getTime() < now.getTime()
 
     // Solo considerar reuniones pasadas que no fueron atendidas
     if (!isPast) return false
@@ -167,8 +168,8 @@ export const validateParentMeeting = (meeting) => {
   if (!meeting.date && !meeting.fecha) {
     errors.push('La fecha de la reunión es requerida')
   } else {
-    const meetingDate = new Date(meeting.date || meeting.fecha)
-    if (isNaN(meetingDate.getTime())) {
+    const meetingDate = parseDateOnly(meeting.date || meeting.fecha)
+    if (!meetingDate || isNaN(meetingDate.getTime())) {
       errors.push('La fecha de la reunión no es válida')
     }
   }
@@ -263,11 +264,11 @@ export const getAttendanceSummaryForParent = (meetings, attendances, parentId, y
   let upcoming = 0
 
   parentMeetings.forEach(meeting => {
-    const meetingDate = new Date(meeting.date || meeting.fecha)
+    const meetingDate = parseDateOnly(meeting.date || meeting.fecha)
     const meetingId = meeting.id
 
     // Si es una reunión futura
-    if (meetingDate > now) {
+    if (meetingDate && meetingDate.getTime() > now.getTime()) {
       upcoming++
       return
     }

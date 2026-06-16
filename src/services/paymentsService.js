@@ -164,12 +164,30 @@ export const paymentsService = {
    * @param {number} studentId - ID del estudiante
    * @returns {Promise<Array>} Lista de obligaciones del estudiante
    */
-  async getObligationsByStudent(studentId) {
+  async getObligationsByStudent(studentId, academicYear = null) {
     try {
-      const response = await get(`/payment-obligations/student/${studentId}`)
+      const qs = academicYear ? `?academic_year=${academicYear}` : ''
+      const response = await get(`/payment-obligations/student/${studentId}${qs}`)
       return response.obligaciones || response.data || response
     } catch (error) {
       console.error(`Error al obtener obligaciones del estudiante ${studentId}:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Editar EN BLOQUE el cronograma de pagos de un estudiante (transaccional)
+   * @param {number} studentId
+   * @param {number} academicYear - Valor de año (p.ej. 2026)
+   * @param {Array} items - [{ id?, concept_id, due_month, due_date, total_amount, exonerado }]
+   * @returns {Promise<Object>} { summary, obligations }
+   */
+  async updateStudentSchedule(studentId, academicYear, items) {
+    try {
+      const response = await put(`/payment-obligations/student/${studentId}/schedule`, { academic_year: academicYear, items })
+      return response.data || response
+    } catch (error) {
+      console.error(`Error al actualizar cronograma del estudiante ${studentId}:`, error)
       throw error
     }
   },

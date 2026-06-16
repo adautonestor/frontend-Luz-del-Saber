@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Trash2, Eye, Download, Image as ImageIcon, Upload, Loader2 } from 'lucide-react'
 import { schedulesService } from '../../services/schedulesService'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 const ScheduleImageGrid = ({
   filteredImages,
@@ -155,7 +156,7 @@ const ScheduleImageGrid = ({
                 <div className="flex justify-between">
                   <span>Subido:</span>
                   <span className="font-medium">
-                    {new Date(image.uploadDate).toLocaleDateString()}
+                    {formatDateSafe(image.uploadDate)}
                   </span>
                 </div>
               </div>

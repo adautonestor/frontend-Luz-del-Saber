@@ -5,6 +5,7 @@
 
 import * as XLSX from 'xlsx'
 import { EXCEL_COLUMN_WIDTHS } from '../config/studentsConstants'
+import { parseDateOnly } from './dateUtils'
 
 /**
  * Obtiene los nombres completos del estudiante (primer nombre + segundo nombre)
@@ -131,8 +132,17 @@ export const exportStudentsToExcel = (students) => {
       // Formatear fecha de nacimiento (YYYY-MM-DD)
       let fechaNacimiento = ''
       if (student.birth_date) {
-        const date = new Date(student.birth_date)
-        fechaNacimiento = date.toISOString().split('T')[0]
+        if (typeof student.birth_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(student.birth_date)) {
+          fechaNacimiento = student.birth_date
+        } else {
+          const date = parseDateOnly(student.birth_date) || new Date(student.birth_date)
+          if (date && !isNaN(date.getTime())) {
+            const y = date.getFullYear()
+            const m = String(date.getMonth() + 1).padStart(2, '0')
+            const d = String(date.getDate()).padStart(2, '0')
+            fechaNacimiento = `${y}-${m}-${d}`
+          }
+        }
       } else if (student.fechaNacimiento) {
         fechaNacimiento = student.fechaNacimiento
       }

@@ -6,7 +6,7 @@ import {
   Image, File, Trash2
 } from 'lucide-react'
 import { usePaymentsStore } from '../../stores/paymentsStore'
-import { getTodayLima } from '../../utils/dateUtils'
+import { getTodayLima, formatDateSafe } from '../../utils/dateUtils'
 
 const ManualPaymentModal = ({ obligation, student, onClose, onSuccess }) => {
   const fileInputRef = useRef(null)
@@ -222,7 +222,7 @@ const ManualPaymentModal = ({ obligation, student, onClose, onSuccess }) => {
             <div>
               <span className="text-gray-600">Vencimiento:</span>
               <p className="font-semibold text-gray-900">
-                {new Date(obligation?.due_date).toLocaleDateString('es-PE')}
+                {formatDateSafe(obligation?.due_date)}
               </p>
             </div>
           </div>

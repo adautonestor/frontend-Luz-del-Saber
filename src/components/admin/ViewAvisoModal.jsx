@@ -143,7 +143,7 @@ const ViewAvisoModal = ({
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Fecha de creación:</span>
               <span className="font-medium">
-                {new Date(selectedAviso.fechaCreacion).toLocaleString('es-PE')}
+                {new Date(selectedAviso.fechaCreacion).toLocaleString('es-PE', { timeZone: 'America/Lima' })}
               </span>
             </div>
             <div className="flex justify-between text-sm">

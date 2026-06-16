@@ -2,6 +2,7 @@ import React from 'react'
 import { getPaymentStatus, getStatusColor, getStatusIcon } from '../../utils/paymentScheduleHelpers.jsx'
 import { calculateMora, calculateDaysLate } from '../../utils/payments/moraCalculator.jsx'
 import { usePaymentsStore } from '../../stores/paymentsStore'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 /**
  * Componente de tabla de cronograma de pagos
@@ -57,7 +58,7 @@ const PaymentScheduleTable = ({
                     {payment.mes || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {payment.due_date ? new Date(payment.due_date).toLocaleDateString('es-PE') : '-'}
+                    {payment.due_date ? formatDateSafe(payment.due_date) : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
                     S/. {parseFloat(payment.total_amount || payment.amount || 0).toFixed(2)}

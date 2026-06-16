@@ -1,4 +1,5 @@
 // Metrics calculation utilities - Anti-hardcoding policy compliant
+import { parseDateOnly } from './dateUtils'
 
 /**
  * Calculates academic metrics only with available data
@@ -107,9 +108,10 @@ export class MetricsCalculator {
 
     // Delinquency rate
     const overdueObligations = obligations.filter(o => {
-      const dueDate = new Date(o.due_date)
+      const dueDate = parseDateOnly(o.due_date)
       const today = new Date()
-      return dueDate < today && o.state === 'pendiente'
+      today.setHours(0, 0, 0, 0)
+      return dueDate && dueDate.getTime() < today.getTime() && o.state === 'pendiente'
     })
 
     const delinquencyRate = obligations.length > 0 ? 
@@ -446,13 +448,14 @@ export function calculatePaymentStatus(obligation) {
   if (!obligation) return 'unknown'
   
   const now = new Date()
-  const dueDate = new Date(obligation.due_date)
-  
+  now.setHours(0, 0, 0, 0)
+  const dueDate = parseDateOnly(obligation.due_date)
+
   if (obligation.paid_amount >= obligation.total_amount) {
     return 'completed'
   } else if (obligation.paid_amount > 0) {
     return 'partial'
-  } else if (now > dueDate) {
+  } else if (dueDate && now.getTime() > dueDate.getTime()) {
     return 'overdue'
   } else {
     return 'pending'

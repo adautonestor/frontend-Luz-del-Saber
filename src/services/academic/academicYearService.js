@@ -1,4 +1,5 @@
 import { get, post, put, del } from '../api'
+import { parseDateOnly } from '../../utils/dateUtils'
 
 /**
  * Convierte una fecha ISO a formato YYYY-MM-DD para inputs HTML
@@ -114,9 +115,9 @@ export const academicYearService = {
       }
 
       // Validar fechas
-      const startDate = new Date(yearData.fecha_inicio)
-      const endDate = new Date(yearData.fecha_fin)
-      if (startDate >= endDate) {
+      const startDate = parseDateOnly(yearData.fecha_inicio)
+      const endDate = parseDateOnly(yearData.fecha_fin)
+      if (!startDate || !endDate || startDate.getTime() >= endDate.getTime()) {
         throw new Error('La fecha de fin debe ser posterior a la fecha de inicio')
       }
 

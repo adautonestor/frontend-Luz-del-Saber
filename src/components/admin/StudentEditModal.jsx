@@ -45,8 +45,9 @@ const StudentEditModal = ({ isOpen, onClose, student }) => {
         // Formatear fecha de nacimiento para input type="date" (YYYY-MM-DD)
         let birthDate = ''
         if (student.birth_date) {
-          const date = new Date(student.birth_date)
-          birthDate = date.toISOString().split('T')[0]
+          birthDate = typeof student.birth_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(student.birth_date)
+            ? student.birth_date
+            : new Date(student.birth_date).toISOString().split('T')[0]
         }
 
         setFormData({

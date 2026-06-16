@@ -46,12 +46,7 @@ export function formatGradeForDisplay(grade, gradingSystem = 'literal', levelId 
   return getGradingScalesStore().formatGrade(grade, gradingSystem, levelId)
 }
 
-/**
- * Alias de formatGradeForDisplay para compatibilidad
- */
-export function formatGradeForDisplay2(grade, gradingSystem = 'literal', levelId = null) {
-  return formatGradeForDisplay(grade, gradingSystem, levelId)
-}
+export { formatGradeForDisplay as formatGradeForDisplay2 }
 
 // ============================================
 // FUNCIONES DE COLOR
@@ -111,12 +106,7 @@ export function isPassingGrade(value, levelId = null) {
   return getGradingScalesStore().isPassingGrade(value, levelId)
 }
 
-/**
- * Alias para compatibilidad
- */
-export function isGradePassing(grade, gradingSystem = 'literal', levelId = null) {
-  return isPassingGrade(grade, levelId)
-}
+export { isPassingGrade as isGradePassing }
 
 /**
  * Valida si una calificación es válida para el sistema
@@ -143,12 +133,7 @@ export function isValidGrade(value, gradingSystem = 'literal') {
   return !isNaN(numValue) && numValue >= 0 && numValue <= 20
 }
 
-/**
- * Alias de isValidGrade
- */
-export function isValidGrade2(value, gradingSystem = 'literal') {
-  return isValidGrade(value, gradingSystem)
-}
+export { isValidGrade as isValidGrade2 }
 
 /**
  * Valida una calificación y retorna mensaje de error
@@ -290,25 +275,32 @@ export function getLetterGradeDescription(letterGrade, levelId = null) {
   if (!letterGrade || letterGrade === '-') return 'Sin calificación'
 
   const store = getGradingScalesStore()
-  const levelConfig = levelId ? store.getScaleForLevel(levelId) : null
 
-  if (levelConfig?.type === 'letters' && levelConfig?.scale) {
-    const gradeItem = levelConfig.scale.find(
-      item => item.value.toUpperCase() === letterGrade.toUpperCase()
-    )
-    if (gradeItem?.label) {
-      return gradeItem.label
+  // Buscar en el nivel específico
+  if (levelId) {
+    const levelConfig = store.getScaleForLevel(levelId)
+    if (levelConfig?.type === 'letters' && levelConfig?.scale) {
+      const gradeItem = levelConfig.scale.find(
+        item => item.value.toUpperCase() === letterGrade.toUpperCase()
+      )
+      if (gradeItem?.label) return gradeItem.label
     }
   }
 
-  // Fallback
-  const descriptions = {
-    'A': 'Logro Destacado',
-    'B': 'Logro Esperado',
-    'C': 'En Proceso',
-    'D': 'En Inicio'
+  // Buscar en todos los niveles configurados
+  const config = store.config
+  if (config?.levels) {
+    for (const lvlConfig of Object.values(config.levels)) {
+      if (lvlConfig?.type === 'letters' && lvlConfig?.scale) {
+        const gradeItem = lvlConfig.scale.find(
+          item => item.value.toUpperCase() === letterGrade.toUpperCase()
+        )
+        if (gradeItem?.label) return gradeItem.label
+      }
+    }
   }
-  return descriptions[letterGrade?.toUpperCase()] || 'Sin calificación'
+
+  return 'Sin calificación'
 }
 
 /**
@@ -328,93 +320,24 @@ export function getAverageGradingScale(levelId = null) {
     }))
   }
 
-  // Fallback
-  return [
-    { letter: 'A', value: 4, description: 'Logro Destacado' },
-    { letter: 'B', value: 3, description: 'Logro Esperado' },
-    { letter: 'C', value: 2, description: 'En Proceso' },
-    { letter: 'D', value: 1, description: 'En Inicio' }
-  ]
-}
-
-// ============================================
-// FUNCIONES LEGACY (mantener para compatibilidad)
-// ============================================
-
-/**
- * Convierte una nota numérica (0-20) a letra (AD, A, B, C)
- * @deprecated Usar convertAverageValueToLetter con el sistema dinámico
- */
-export function convertNumericGradeToLetter(numericGrade) {
-  if (numericGrade === null || numericGrade === undefined || isNaN(numericGrade)) {
-    return '-'
+  // Usar la escala por defecto del store (DEFAULT_LETTER_SCALE)
+  const config = store.config
+  if (config?.levels) {
+    for (const lvlConfig of Object.values(config.levels)) {
+      if (lvlConfig?.type === 'letters' && lvlConfig?.scale) {
+        return lvlConfig.scale.map(item => ({
+          letter: item.value,
+          value: item.numericValue,
+          description: item.label
+        }))
+      }
+    }
   }
 
-  const grade = parseFloat(numericGrade)
-
-  if (grade >= 18) return 'AD'
-  if (grade >= 14) return 'A'
-  if (grade >= 11) return 'B'
-  return 'C'
-}
-
-/**
- * Convierte una nota letra (AD, A, B, C) a numérica (0-20)
- * @deprecated Usar convertLetterToAverageValue con el sistema dinámico
- */
-export function convertLetterGradeToNumeric(letterGrade) {
-  if (!letterGrade || letterGrade === '-') return null
-
-  const gradeMap = {
-    'AD': 19,
-    'A': 15.5,
-    'B': 12,
-    'C': 5.5
-  }
-
-  return gradeMap[letterGrade.toUpperCase()] || null
-}
-
-/**
- * Convierte un array de notas numéricas a letras
- * @deprecated
- */
-export function convertGradesArrayToLetters(grades) {
-  if (!Array.isArray(grades)) return []
-  return grades.map(grade => convertNumericGradeToLetter(grade))
-}
-
-/**
- * Obtiene el rango numérico de una nota letra
- * @deprecated
- */
-export function getLetterGradeRange(letterGrade) {
-  const ranges = {
-    'AD': { min: 18, max: 20 },
-    'A': { min: 14, max: 17 },
-    'B': { min: 11, max: 13 },
-    'C': { min: 0, max: 10 }
-  }
-  return ranges[letterGrade?.toUpperCase()] || { min: 0, max: 0 }
-}
-
-/**
- * Obtiene el icono apropiado para una nota
- * @deprecated
- */
-export function getGradeIcon(grade, gradingSystem = 'literal') {
-  let letterGrade = grade
-
-  if (typeof grade === 'number') {
-    letterGrade = convertNumericGradeToLetter(grade)
-  }
-
-  const iconMap = {
-    'AD': 'CheckCircle',
-    'A': 'CheckCircle',
-    'B': 'AlertCircle',
-    'C': 'XCircle'
-  }
-
-  return iconMap[letterGrade?.toUpperCase()] || 'Circle'
+  // Último recurso: usar defaults del store
+  return store.getDefaultScale().map(item => ({
+    letter: item.value,
+    value: item.numericValue,
+    description: item.label
+  }))
 }

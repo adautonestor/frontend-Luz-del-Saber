@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { X, Send, Paperclip } from 'lucide-react'
+import { parseDateOnly } from '../../utils/dateUtils'
 
 /**
  * Modal para crear/editar un comunicado
@@ -26,6 +27,22 @@ const NewCommunicationModal = ({
   if (!isOpen) return null
 
   const { handleFilesSelect, handleFilesDrop, removeAttachment } = fileHandlers
+
+  // Generar botones de grado/sección dinámicos desde los estudiantes cargados
+  const gradeButtons = useMemo(() => {
+    const gradesMap = new Map()
+    mockStudents.forEach(s => {
+      const grado = s.grado || s.grade_name
+      const seccion = s.seccion || s.section_name
+      if (grado && seccion) {
+        const key = `${grado}-${seccion}`
+        if (!gradesMap.has(key)) {
+          gradesMap.set(key, { grado, seccion, label: `${grado} ${seccion}` })
+        }
+      }
+    })
+    return Array.from(gradesMap.values()).sort((a, b) => a.label.localeCompare(b.label))
+  }, [mockStudents])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -121,28 +138,17 @@ const NewCommunicationModal = ({
                 <h4 className="text-sm font-medium text-gray-700">
                   Seleccionar Estudiantes ({selectedStudents.length} seleccionados)
                 </h4>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onSelectGrade('5°', 'A')}
-                    className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                  >
-                    5° A
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSelectGrade('5°', 'B')}
-                    className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
-                  >
-                    5° B
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSelectGrade('4°', 'A')}
-                    className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
-                  >
-                    4° A
-                  </button>
+                <div className="flex flex-wrap gap-2">
+                  {gradeButtons.map((gb) => (
+                    <button
+                      key={gb.label}
+                      type="button"
+                      onClick={() => onSelectGrade(gb.grado, gb.seccion)}
+                      className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    >
+                      {gb.label}
+                    </button>
+                  ))}
                   <button
                     type="button"
                     onClick={() => onSelectGrade(null, null)}
@@ -172,7 +178,7 @@ const NewCommunicationModal = ({
                       />
                       <div className="text-sm">
                         <div className="font-medium text-gray-900">
-                          {student.name} {student.last_names}
+                          {student.first_names} {student.last_names}
                         </div>
                         <div className="text-xs text-gray-500">
                           {student.grado} - {student.seccion}
@@ -283,7 +289,7 @@ const NewCommunicationModal = ({
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {newCommunication.expirationDate
-                ? `Vencimiento configurado: ${new Date(newCommunication.expirationDate).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                ? `Vencimiento configurado: ${(() => { const d = parseDateOnly(newCommunication.expirationDate); return d ? d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' })()}`
                 : 'Por defecto: 7 días desde el envío si no se especifica'}
             </p>
           </div>

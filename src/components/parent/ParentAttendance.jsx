@@ -8,6 +8,7 @@ import Barcode from 'react-barcode'
 import { useAuthStore } from '../../stores/authStore'
 import { studentsService } from '../../services/studentsService'
 import { attendanceService } from '../../services/attendanceService'
+import { parseDateOnly, formatDateSafe, formatTime } from '../../utils/dateUtils'
 
 const ParentAttendance = () => {
   const { user } = useAuthStore()
@@ -114,7 +115,10 @@ const ParentAttendance = () => {
   // Calcular estadísticas del mes
   const getMonthlyStats = () => {
     const monthRecords = attendanceRecords.filter(record => {
-      const recordDate = new Date(record.date)
+      // record.date llega como 'YYYY-MM-DD'. parseDateOnly evita el desfase
+      // de zona horaria que ocurriría con new Date('YYYY-MM-DD').
+      const recordDate = parseDateOnly(record.date)
+      if (!recordDate) return false
       return recordDate.getMonth() + 1 === selectedMonth &&
              recordDate.getFullYear() === selectedYear
     })
@@ -378,12 +382,17 @@ const ParentAttendance = () => {
                           <div className="flex items-center">
                             <Calendar className="w-4 h-4 text-gray-400 mr-2" />
                             <span className="text-sm text-gray-900">
-                              {new Date(record.date).toLocaleDateString('es-PE', {
-                                weekday: 'short',
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })}
+                              {(() => {
+                                // record.date es DATE 'YYYY-MM-DD' — parsear como local
+                                // evita el shift de UTC->Lima que mostraba el día anterior.
+                                const d = parseDateOnly(record.date)
+                                return d ? d.toLocaleDateString('es-PE', {
+                                  weekday: 'short',
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                }) : formatDateSafe(record.date)
+                              })()}
                             </span>
                           </div>
                         </td>
@@ -392,10 +401,7 @@ const ParentAttendance = () => {
                           {record.entry_time1 ? (
                             <div className="flex items-center justify-center gap-1 text-sm text-gray-900">
                               <Clock className="w-4 h-4 text-gray-400" />
-                              {new Date(record.entry_time1).toLocaleTimeString('es-PE', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                              {formatTime(record.entry_time1).slice(0, 5)}
                             </div>
                           ) : (
                             <span className="text-sm text-gray-400">-</span>
@@ -406,10 +412,7 @@ const ParentAttendance = () => {
                           {record.exit_time1 ? (
                             <div className="flex items-center justify-center gap-1 text-sm text-gray-900">
                               <Clock className="w-4 h-4 text-gray-400" />
-                              {new Date(record.exit_time1).toLocaleTimeString('es-PE', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                              {formatTime(record.exit_time1).slice(0, 5)}
                             </div>
                           ) : (
                             <span className="text-sm text-gray-400">-</span>

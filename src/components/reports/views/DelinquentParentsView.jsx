@@ -1,5 +1,6 @@
 import React from 'react'
 import { AlertCircle, DollarSign, Activity } from 'lucide-react'
+import { formatDateSafe } from '../../../utils/dateUtils'
 
 /**
  * Vista de reporte de padres morosos
@@ -128,7 +129,7 @@ const DelinquentParentsView = ({
                       onChange={() => togglePaymentCommitment(parent.parentEmail)}
                       className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                       title={paymentCommitments[parent.parentEmail]?.hasCommitment
-                        ? `Compromiso firmado el ${new Date(paymentCommitments[parent.parentEmail]?.date).toLocaleDateString('es-PE')}`
+                        ? `Compromiso firmado el ${formatDateSafe(paymentCommitments[parent.parentEmail]?.date)}`
                         : 'Marcar compromiso de pago'}
                     />
                     {paymentCommitments[parent.parentEmail]?.hasCommitment && (

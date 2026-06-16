@@ -1,21 +1,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, CheckCircle } from 'lucide-react'
-
-/**
- * @deprecated Estas constantes son valores por defecto de fallback.
- * La configuración de calificaciones se gestiona ahora desde:
- * - API: /api/system-settings/grading-scales
- * - Hook: useGradingScales()
- * Estos valores se mantienen solo por retrocompatibilidad.
- */
-const LETTER_GRADES = ['AD', 'A', 'B', 'C']
-const LETTER_DESCRIPTIONS = {
-  'AD': 'Logro Destacado',
-  'A': 'Logro Esperado',
-  'B': 'En Proceso',
-  'C': 'En Inicio'
-}
+import { getAverageGradingScale } from '@/utils/gradeConversion.jsx'
 
 /**
  * Modal para registrar conducta y calificación de padres de un estudiante
@@ -124,9 +110,9 @@ const BehaviorModal = ({
                     className="input w-full"
                   >
                     <option value="">Seleccionar calificación (opcional)</option>
-                    {LETTER_GRADES.map(grade => (
-                      <option key={grade} value={grade}>
-                        {grade} - {LETTER_DESCRIPTIONS[grade]}
+                    {getAverageGradingScale(student?.level_id).map(item => (
+                      <option key={item.letter} value={item.letter}>
+                        {item.letter} - {item.description}
                       </option>
                     ))}
                   </select>
@@ -166,9 +152,9 @@ const BehaviorModal = ({
                     className="input w-full"
                   >
                     <option value="">Seleccionar calificación</option>
-                    {LETTER_GRADES.map(grade => (
-                      <option key={grade} value={grade}>
-                        {grade} - {LETTER_DESCRIPTIONS[grade]}
+                    {getAverageGradingScale(student?.level_id).map(item => (
+                      <option key={item.letter} value={item.letter}>
+                        {item.letter} - {item.description}
                       </option>
                     ))}
                   </select>

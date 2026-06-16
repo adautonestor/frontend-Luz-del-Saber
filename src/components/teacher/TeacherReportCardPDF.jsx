@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer'
+import { getAverageGradingScale } from '@/utils/gradeConversion.jsx'
 
 /**
  * Estilos para el PDF de boleta del profesor
@@ -349,17 +350,29 @@ const TeacherReportCardDocument = ({ reportData }) => {
           </View>
         )}
 
-        {/* Leyenda */}
+        {/* Leyenda dinámica */}
         <View style={styles.legend}>
           <Text style={styles.legendTitle}>Escala de Calificacion:</Text>
-          <View style={styles.legendRow}>
-            <Text style={[styles.legendItem, styles.gradeExcellent]}>AD/A o 18-20: Logro destacado</Text>
-            <Text style={[styles.legendItem, styles.gradeGood]}>B o 14-17: Logro esperado</Text>
-          </View>
-          <View style={styles.legendRow}>
-            <Text style={[styles.legendItem, styles.gradeRegular]}>C o 11-13: En proceso</Text>
-            <Text style={[styles.legendItem, styles.gradePoor]}>D o 0-10: En inicio</Text>
-          </View>
+          {(() => {
+            const scale = getAverageGradingScale(student?.level_id)
+            const colorStyles = [styles.gradeExcellent, styles.gradeGood, styles.gradeRegular, styles.gradePoor]
+            const rows = []
+            for (let i = 0; i < scale.length; i += 2) {
+              rows.push(
+                <View key={i} style={styles.legendRow}>
+                  <Text style={[styles.legendItem, colorStyles[i] || styles.gradePoor]}>
+                    {scale[i].letter}: {scale[i].description}
+                  </Text>
+                  {scale[i + 1] && (
+                    <Text style={[styles.legendItem, colorStyles[i + 1] || styles.gradePoor]}>
+                      {scale[i + 1].letter}: {scale[i + 1].description}
+                    </Text>
+                  )}
+                </View>
+              )
+            }
+            return rows
+          })()}
         </View>
 
         {/* Pie de pagina */}

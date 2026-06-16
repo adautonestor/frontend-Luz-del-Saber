@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Megaphone, Bell, Eye } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 /**
  * Sección de avisos importantes del dashboard
@@ -30,7 +31,7 @@ const DashboardAvisos = ({ avisos }) => {
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span className="flex items-center gap-1">
                 <Bell size={12} />
-                {new Date(aviso.fechaCreacion).toLocaleDateString('es-PE')}
+                {formatDateSafe(aviso.fechaCreacion)}
               </span>
               <button
                 onClick={() => navigate(`/padre/avisos?aviso=${aviso.id}`)}

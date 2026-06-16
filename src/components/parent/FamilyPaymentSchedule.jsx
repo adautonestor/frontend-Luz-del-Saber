@@ -23,6 +23,7 @@ import {
   calculateDaysLate,
   calculateTotalWithMora
 } from '../../utils/payments/moraCalculator.jsx'
+import { parseDateOnly, formatDateSafe } from '../../utils/dateUtils'
 
 const FamilyPaymentSchedule = () => {
   const { user } = useAuthStore()
@@ -452,7 +453,7 @@ const FamilyPaymentSchedule = () => {
 
                     <td className="px-6 py-4 text-center">
                       <div className="text-sm text-gray-900">
-                        {new Date(payment.due_date).toLocaleDateString('es-PE')}
+                        {formatDateSafe(payment.due_date)}
                       </div>
                       {isOverdue && (
                         <div className="text-xs text-red-600 font-medium">
@@ -651,11 +652,7 @@ const FamilyPaymentSchedule = () => {
                   <p className="text-xs text-gray-500 uppercase font-medium">Fecha Vencimiento</p>
                   <p className="text-gray-900 font-semibold">
                     {paymentDetails.due_date
-                      ? new Date(paymentDetails.due_date).toLocaleDateString('es-PE', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric'
-                        })
+                      ? (() => { const d = parseDateOnly(paymentDetails.due_date); return d ? d.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' })()
                       : 'N/A'}
                   </p>
                 </div>

@@ -220,7 +220,7 @@ const EnrollmentModal = ({ isOpen, onClose }) => {
                     availableYears={formState.availableYears}
                     handleChange={formState.handleChange}
                     studentId={searchState.foundStudent?.id}
-                    studentName={searchState.foundStudent ? `${searchState.foundStudent.first_names} ${`${searchState.foundStudent.paternal_last_name || ''} ${searchState.foundStudent.maternal_last_name || ''}`.trim() || searchState.foundStudent.last_names || ''}` : null}
+                    studentName={searchState.foundStudent ? `${[searchState.foundStudent.first_names, searchState.foundStudent.last_names].filter(Boolean).join(' ')} ${`${searchState.foundStudent.paternal_last_name || ''} ${searchState.foundStudent.maternal_last_name || ''}`.trim()}` : null}
                   />
 
                   {/* Cronograma de Pagos */}

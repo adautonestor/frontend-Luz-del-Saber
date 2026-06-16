@@ -120,6 +120,12 @@ const useGradingScalesStore = create((set, get) => ({
   },
 
   /**
+   * Obtener la escala por defecto (centralizada)
+   * @returns {Array} Escala de letras por defecto
+   */
+  getDefaultScale: () => DEFAULT_LETTER_SCALE,
+
+  /**
    * Convertir valor numérico a letra
    * @param {number} value - Valor numérico (ej: 3.5)
    * @param {number} levelId - ID del nivel (opcional, usa fallback si no se proporciona)
@@ -270,6 +276,17 @@ const useGradingScalesStore = create((set, get) => ({
     // Si es numérico
     const numValue = parseFloat(value)
     if (!isNaN(numValue)) {
+      // Para niveles tipo letras: convertir a letra y buscar su color
+      if (levelConfig?.type === 'letters' && levelConfig?.scale) {
+        const letter = get().convertNumericToLetter(numValue, levelId)
+        if (letter && letter !== '-') {
+          const gradeItem = levelConfig.scale.find(
+            item => item.value.toUpperCase() === letter.toUpperCase()
+          )
+          if (gradeItem?.color) return gradeItem.color
+        }
+      }
+      // Para niveles tipo numérico: usar rangos configurados
       if (levelConfig?.type === 'numeric' && levelConfig?.ranges) {
         for (const range of levelConfig.ranges) {
           if (numValue >= range.min && numValue <= range.max) {
@@ -277,8 +294,8 @@ const useGradingScalesStore = create((set, get) => ({
           }
         }
       }
-      // Fallback para numérico
-      if (numValue >= 17) return '#22c55e'
+      // Fallback para numérico (sin config de nivel)
+      if (numValue >= 18) return '#22c55e'
       if (numValue >= 14) return '#3b82f6'
       if (numValue >= 11) return '#eab308'
       return '#ef4444'
@@ -311,19 +328,18 @@ const useGradingScalesStore = create((set, get) => ({
       return hexToClasses[hexColor] || 'bg-gray-100 text-gray-500'
     }
 
-    // Si es numérico, primero convertir a letra
+    // Si es numérico, obtener color usando getGradeColor que respeta la config del nivel
     const numValue = parseFloat(value)
     if (!isNaN(numValue)) {
-      // Para escala literal (1-4)
-      if (numValue <= 4) {
-        const letter = get().convertNumericToLetter(numValue, levelId)
-        return get().getGradeColorClasses(letter, levelId)
+      const hexColor = get().getGradeColor(numValue, levelId)
+      const hexToClasses = {
+        '#22c55e': 'bg-green-100 text-green-800',
+        '#3b82f6': 'bg-blue-100 text-blue-800',
+        '#eab308': 'bg-yellow-100 text-yellow-800',
+        '#ef4444': 'bg-red-100 text-red-800',
+        '#9ca3af': 'bg-gray-100 text-gray-500'
       }
-      // Para escala vigesimal (0-20)
-      if (numValue >= 17) return 'bg-green-100 text-green-800'
-      if (numValue >= 14) return 'bg-blue-100 text-blue-800'
-      if (numValue >= 11) return 'bg-yellow-100 text-yellow-800'
-      return 'bg-red-100 text-red-800'
+      return hexToClasses[hexColor] || 'bg-gray-100 text-gray-500'
     }
 
     return 'bg-gray-100 text-gray-500'

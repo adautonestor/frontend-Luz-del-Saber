@@ -262,7 +262,7 @@ const BoletaNotas = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {getAverageGradingScale().map((item, index) => (
+                      {getAverageGradingScale(selectedChild?.level_id).map((item, index) => (
                         <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                           <td className="px-6 py-4">
                             <span className={`text-2xl font-bold ${getLetterGradeColor(item.letter)}`}>
@@ -306,45 +306,28 @@ const BoletaNotas = () => {
               </div>
               <div className="p-6">
                 <p className="text-sm text-gray-600 mb-4">
-                  Las calificaciones están expresadas en escala literal según el Currículo Nacional del Perú:
+                  Las calificaciones están expresadas en escala literal según la configuración del nivel:
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-green-900">AD - Logro Destacado (18-20)</p>
-                      <p className="text-xs text-green-700 mt-1">
-                        El estudiante evidencia un nivel superior a lo esperado respecto a la competencia.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-blue-900">A - Logro Esperado (14-17)</p>
-                      <p className="text-xs text-blue-700 mt-1">
-                        El estudiante evidencia el nivel esperado respecto a la competencia.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-yellow-900">B - En Proceso (11-13)</p>
-                      <p className="text-xs text-yellow-700 mt-1">
-                        El estudiante está próximo o cerca al nivel esperado respecto a la competencia.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-red-900">C - En Inicio (0-10)</p>
-                      <p className="text-xs text-red-700 mt-1">
-                        El estudiante muestra un progreso mínimo en una competencia de acuerdo al nivel esperado.
-                      </p>
-                    </div>
-                  </div>
+                  {getAverageGradingScale(selectedChild?.level_id).map((item, idx, arr) => {
+                    const colorSchemes = [
+                      { bg: 'bg-green-50', border: 'border-green-200', icon: 'text-green-600', title: 'text-green-900', desc: 'text-green-700' },
+                      { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'text-blue-600', title: 'text-blue-900', desc: 'text-blue-700' },
+                      { bg: 'bg-yellow-50', border: 'border-yellow-200', icon: 'text-yellow-600', title: 'text-yellow-900', desc: 'text-yellow-700' },
+                      { bg: 'bg-red-50', border: 'border-red-200', icon: 'text-red-600', title: 'text-red-900', desc: 'text-red-700' },
+                      { bg: 'bg-gray-50', border: 'border-gray-200', icon: 'text-gray-600', title: 'text-gray-900', desc: 'text-gray-700' }
+                    ]
+                    const colors = colorSchemes[Math.min(idx, colorSchemes.length - 1)]
+                    const IconComp = idx < arr.length - 2 ? CheckCircle : idx < arr.length - 1 ? AlertCircle : XCircle
+                    return (
+                      <div key={item.letter} className={`flex items-start gap-3 p-3 ${colors.bg} border ${colors.border} rounded-lg`}>
+                        <IconComp className={`w-5 h-5 ${colors.icon} mt-0.5`} />
+                        <div>
+                          <p className={`font-semibold ${colors.title}`}>{item.letter} - {item.description}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </motion.div>

@@ -62,11 +62,12 @@ export const useTeacherCommunicationsState = () => {
   // Estudiantes reales desde backend
   const [mockStudents, setMockStudents] = useState([])
 
-  // Cargar estudiantes al montar
+  // Cargar estudiantes del docente al montar
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        const students = await studentsService.getAll()
+        const filters = user?.id ? { teacher_id: user.id } : {}
+        const students = await studentsService.getAll(filters)
         setMockStudents(students || [])
       } catch (error) {
         console.error('Error loading students:', error)
@@ -74,12 +75,12 @@ export const useTeacherCommunicationsState = () => {
       }
     }
     loadStudents()
-  }, [])
+  }, [user?.id])
 
-  // Opciones de destinatarios (TODO: Calcular counts dinámicamente desde backend)
+  // Opciones de destinatarios (count dinámico desde estudiantes cargados)
   const recipients = [
-    { id: 'all', name: 'Todos los Padres', count: 0 },
-    { id: 'custom', name: 'Selección personalizada', count: 0 }
+    { id: 'all', name: 'Todos los Padres', count: mockStudents.length },
+    { id: 'custom', name: 'Selección personalizada', count: mockStudents.length }
   ]
 
   // Estado de selección de estudiantes
@@ -111,6 +112,13 @@ export const useTeacherCommunicationsState = () => {
     // Solo mostrar comunicados enviados
     if (estado !== 'sent' && estado !== 'enviado') {
       return false
+    }
+
+    // Si el comunicado fue creado por este docente, siempre mostrarlo
+    const senderId = comm.sender || comm.remitenteId || comm.remitente || comm.sender_id || comm.created_by
+    if (senderId != null && user?.id != null &&
+        (senderId == user.id || String(senderId) === String(user.id))) {
+      return true
     }
 
     // Si es para "todos", el profesor lo ve
@@ -230,10 +238,12 @@ export const useTeacherCommunicationsState = () => {
       size: adj.tamaño
     }))
 
+    const isCustomRecipients = communication.destinatarios?.type === 'estudiantes' || communication.destinatarios?.type === 'especifico'
+
     setNewCommunication({
       title: communication.titulo || '',
       content: communication.contenido || '',
-      recipients: communication.destinatarios?.type === 'especifico' ? 'custom' : 'all',
+      recipients: isCustomRecipients ? 'custom' : 'all',
       priority: priorityMap[communication.prioridad] || 'medium',
       type: typeMap[communication.type] || 'general',
       attachments: attachments,
@@ -241,7 +251,7 @@ export const useTeacherCommunicationsState = () => {
     })
 
     // If custom recipients, set selected students
-    if (communication.destinatarios?.type === 'especifico' && communication.destinatarios?.valores) {
+    if (isCustomRecipients && communication.destinatarios?.valores) {
       setSelectedStudents(communication.destinatarios.valores)
       setShowStudentSelector(true)
     }
@@ -298,8 +308,8 @@ export const useTeacherCommunicationsState = () => {
 
         if (newCommunication.recipients === 'custom' && selectedStudents.length > 0) {
           destinatarios = {
-            type: 'especifico',
-            valores: selectedStudents // Array of student IDs
+            type: 'estudiantes',
+            valores: selectedStudents // Array of student IDs (backend resolves to parent user_ids)
           }
         } else {
           // For now, send to all parents
@@ -395,10 +405,14 @@ export const useTeacherCommunicationsState = () => {
   }
 
   const selectAllFromGrade = (grado, seccion = null) => {
+    if (grado === null) {
+      setSelectedStudents([])
+      return
+    }
     const studentsToSelect = mockStudents
       .filter(s => {
-        const studentGrado = s.grado || s.grade_id || s.grade_id
-        const studentSeccion = s.seccion || s.section_id || s.section_id
+        const studentGrado = s.grado || s.grade_name
+        const studentSeccion = s.seccion || s.section_name
         return studentGrado === grado && (seccion === null || studentSeccion === seccion)
       })
       .map(s => s.id)

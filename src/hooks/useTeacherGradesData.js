@@ -155,12 +155,14 @@ export const useTeacherGradesData = () => {
       relevantCourses = relevantCourses.filter(course => course.id === courseIdNum)
     }
 
-    // Obtener grade_ids de los cursos relevantes
+    // Obtener grade_ids de TODAS las asignaciones de los cursos relevantes
     relevantCourses.forEach(course => {
-      const assignment = (teacherAssignments || []).find(a => a.course_id === course.id)
-      if (assignment && assignment.grade_id) {
-        assignedGradeIds.add(assignment.grade_id)
-      }
+      const courseAssigns = (teacherAssignments || []).filter(a => a.course_id === course.id)
+      courseAssigns.forEach(assignment => {
+        if (assignment.grade_id) {
+          assignedGradeIds.add(assignment.grade_id)
+        }
+      })
     })
 
     // Filtrar grados por:

@@ -4,6 +4,7 @@ import {
   X, User, Calendar, Mail, Phone, MapPin, GraduationCap,
   Users, FileText, BarChart3, BookOpen
 } from 'lucide-react'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 const StudentDetailView = ({
   student,
@@ -83,7 +84,7 @@ const StudentDetailView = ({
                   <div>
                     <span className="text-sm text-gray-600">Fecha de Nacimiento:</span>
                     <p className="font-medium">
-                      {student.birth_date ? new Date(student.birth_date).toLocaleDateString('es-PE') : '-'}
+                      {student.birth_date ? formatDateSafe(student.birth_date) : '-'}
                       {student.birth_date && (
                         <span className="text-gray-500 ml-2">
                           ({calculateAge(student.birth_date)} años)
@@ -115,9 +116,9 @@ const StudentDetailView = ({
                     <span className="text-sm text-gray-600">Fecha de Ingreso:</span>
                     <p className="font-medium">
                       {student.matriculation_date
-                        ? new Date(student.matriculation_date).toLocaleDateString('es-PE')
+                        ? formatDateSafe(student.matriculation_date)
                         : student.enrollment_date
-                          ? new Date(student.enrollment_date).toLocaleDateString('es-PE')
+                          ? formatDateSafe(student.enrollment_date)
                           : '-'}
                     </p>
                   </div>

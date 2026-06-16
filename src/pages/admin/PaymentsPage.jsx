@@ -15,6 +15,7 @@ import levelsService from '../../services/levelsService'
 import { getFileUrl } from '../../services/api'
 import { calculateMora, calculateDaysLate } from '../../utils/payments/moraCalculator.jsx'
 import { usePaymentsStore } from '../../stores/paymentsStore'
+import { parseDateOnly, formatDateSafe } from '../../utils/dateUtils'
 
 /**
  * Página principal de gestión de pagos
@@ -234,7 +235,7 @@ const PaymentsPage = () => {
                           <span>{concepto.applicable_months.length} meses</span>
                         )}
                         {concepto.type === 'unico' && concepto.unique_payment_date && (
-                          <span>{new Date(concepto.unique_payment_date).toLocaleDateString('es-PE')}</span>
+                          <span>{formatDateSafe(concepto.unique_payment_date)}</span>
                         )}
                         {!concepto.applicable_months?.length && !concepto.unique_payment_date && (
                           <span className="text-gray-400">-</span>
@@ -592,7 +593,7 @@ const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObliga
 
                 // Determinar estado real (detectar vencimiento automáticamente)
                 const isOverdue = obligation.due_date &&
-                                 new Date(obligation.due_date) < new Date() &&
+                                 ((parseDateOnly(obligation.due_date)?.getTime() || 0) < new Date().setHours(0,0,0,0)) &&
                                  obligation.estadoPago !== 'pagado'
 
                 const realStatus = isOverdue ? 'vencido' : obligation.estadoPago
@@ -670,11 +671,7 @@ const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObliga
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           {obligation.due_date ? (
                             <>
-                              {new Date(obligation.due_date).toLocaleDateString('es-PE', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                              })}
+                              {(() => { const d = parseDateOnly(obligation.due_date); return d ? d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-' })()}
                               <button
                                 onClick={() => handleStartEdit(obligation.id, obligation.due_date)}
                                 className="text-blue-500 hover:text-blue-700"
@@ -829,11 +826,7 @@ const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObliga
                     <p className="text-xs text-gray-600 font-medium">Fecha de Vencimiento</p>
                     <p className="text-sm text-gray-900 font-semibold">
                       {selectedObligationDetails.obligation?.due_date ?
-                        new Date(selectedObligationDetails.obligation.due_date).toLocaleDateString('es-PE', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric'
-                        }) : 'N/A'}
+                        (() => { const d = parseDateOnly(selectedObligationDetails.obligation.due_date); return d ? d.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' })() : 'N/A'}
                     </p>
                   </div>
                   <div>

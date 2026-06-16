@@ -172,7 +172,7 @@ const StructureTab = ({
                     </div>
                     <div>
                       <label className="text-xs text-gray-500 uppercase font-medium">Horas Semanales</label>
-                      <p className="text-sm mt-1">{selectedItem.horasSemanales} horas</p>
+                      <p className="text-sm mt-1">{selectedItem.weekly_hours || selectedItem.horasSemanales || '-'} horas</p>
                     </div>
                   </>
                 )}

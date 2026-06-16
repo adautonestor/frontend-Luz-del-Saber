@@ -2,6 +2,7 @@
  * Utilidades para procesamiento de pagos
  * Incluye lógica de actualización de obligaciones tras pagos
  */
+import { parseDateOnly } from '../dateUtils'
 
 /**
  * Calcula el nuevo estado de una obligación basado en montos
@@ -219,9 +220,11 @@ export function calculatePaymentStats(paymentRecords, obligations) {
     .reduce((sum, o) => sum + (o.pending_balance || 0), 0)
 
   // Vencidos
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const vencidos = obligations.filter(o => {
-    const dueDate = new Date(o.due_date)
-    return (o.state === 'pendiente' || o.state === 'parcial') && dueDate < now
+    const dueDate = parseDateOnly(o.due_date)
+    return (o.state === 'pendiente' || o.state === 'parcial') && dueDate && dueDate.getTime() < today.getTime()
   })
 
   return {

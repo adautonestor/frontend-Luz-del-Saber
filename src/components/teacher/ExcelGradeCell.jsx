@@ -38,25 +38,18 @@ const ExcelGradeCell = ({
   const inputRef = useRef(null)
   const cellRef = useRef(null)
 
-  // Opciones de calificación literal - usa las dinámicas si se proporcionan
-  // Valores por defecto consistentes con la configuración central (A=4, B=3, C=2, D=1)
-  const DEFAULT_LITERAL_GRADES = [
-    { value: 'A', label: 'A', description: 'A - Logro destacado (4)', numeric: 4, color: 'text-green-600 bg-green-50' },
-    { value: 'B', label: 'B', description: 'B - Logro esperado (3)', numeric: 3, color: 'text-blue-600 bg-blue-50' },
-    { value: 'C', label: 'C', description: 'C - En proceso (2)', numeric: 2, color: 'text-yellow-600 bg-yellow-50' },
-    { value: 'D', label: 'D', description: 'D - En inicio (1)', numeric: 1, color: 'text-red-600 bg-red-50' }
-  ]
+  // Opciones de calificación literal - usa las dinámicas si se proporcionan, sino las del store
+  const buildGradeOptions = (options) => options.map(opt => ({
+    value: opt.value,
+    label: opt.value,
+    description: `${opt.value} - ${opt.label} (${opt.numericValue})`,
+    numeric: opt.numericValue,
+    color: getColorClass(opt.color)
+  }))
 
-  // Usar opciones dinámicas si se proporcionan, sino usar defaults
   const LITERAL_GRADES = literalGradeOptions?.length > 0
-    ? literalGradeOptions.map(opt => ({
-        value: opt.value,
-        label: opt.value,
-        description: `${opt.value} - ${opt.label} (${opt.numericValue})`,
-        numeric: opt.numericValue,
-        color: getColorClass(opt.color)
-      }))
-    : DEFAULT_LITERAL_GRADES
+    ? buildGradeOptions(literalGradeOptions)
+    : buildGradeOptions(getGradingScalesStore().getDefaultScale())
 
   // Parsear el valor inicial
   useEffect(() => {

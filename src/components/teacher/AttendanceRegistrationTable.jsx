@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, AlertTriangle, XCircle, CircleDot, Users, Search } from 'lucide-react'
-import { getTodayLima } from '../../utils/dateUtils'
+import { getTodayLima, parseDateOnly } from '../../utils/dateUtils'
 
 const AttendanceRegistrationTable = ({
   selectedCourse,
@@ -17,10 +17,7 @@ const AttendanceRegistrationTable = ({
   getStatusColor,
   getStatusText,
   handleRegisterAttendance,
-  toggleLateJustified,
-  toggleAbsenceJustified,
-  setSelectedRecord,
-  setShowJustifyModal,
+  openJustifyModal,
   saving
 }) => {
   return (
@@ -74,12 +71,17 @@ const AttendanceRegistrationTable = ({
             Registro de Asistencia - {selectedCourse.name} {selectedCourse.gradeName} Sección {selectedSection.name}
           </h3>
           <p className="text-sm text-blue-700 mt-1">
-            {new Date(selectedDate).toLocaleDateString('es-PE', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
+            {(() => {
+              // selectedDate viene del input type="date" como 'YYYY-MM-DD'.
+              // parseDateOnly evita el desfase UTC->Lima que retrasaba un día.
+              const d = parseDateOnly(selectedDate)
+              return d ? d.toLocaleDateString('es-PE', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              }) : ''
+            })()}
           </p>
         </div>
 
@@ -196,32 +198,32 @@ const AttendanceRegistrationTable = ({
 
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex gap-2 justify-center">
-                        {/* Botón justificar tardanza */}
+                        {/* Botón justificar tardanza (con comentario) */}
                         {record && record.estadoEntrada === 'tardanza' && (
                           <button
-                            onClick={() => toggleLateJustified(record.id)}
+                            onClick={() => openJustifyModal(record, 'tardanza')}
                             disabled={saving}
                             className={`px-2 py-1 text-xs rounded transition-colors ${
                               record.tardanzaJustificada
                                 ? 'bg-green-500 text-white hover:bg-green-600'
                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
-                            title={record.tardanzaJustificada ? 'Tardanza justificada' : 'Justificar tardanza'}
+                            title={record.tardanzaJustificada ? 'Tardanza justificada (ver/editar)' : 'Justificar tardanza'}
                           >
                             {record.tardanzaJustificada ? '✓ T.Just.' : 'Just. Tard.'}
                           </button>
                         )}
-                        {/* Botón justificar falta */}
+                        {/* Botón justificar falta (con comentario) */}
                         {record && record.estadoEntrada === 'falta' && (
                           <button
-                            onClick={() => toggleAbsenceJustified(record.id)}
+                            onClick={() => openJustifyModal(record, 'falta')}
                             disabled={saving}
                             className={`px-2 py-1 text-xs rounded transition-colors ${
                               record.faltaJustificada
                                 ? 'bg-green-500 text-white hover:bg-green-600'
                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
-                            title={record.faltaJustificada ? 'Falta justificada' : 'Justificar falta'}
+                            title={record.faltaJustificada ? 'Falta justificada (ver/editar)' : 'Justificar falta'}
                           >
                             {record.faltaJustificada ? '✓ F.Just.' : 'Just. Falta'}
                           </button>

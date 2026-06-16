@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Archive, AlertCircle } from 'lucide-react'
+import { formatDateSafe } from '../../../utils/dateUtils'
 
 /**
  * Modal para cerrar año lectivo con workflow de 3 pasos
@@ -100,7 +101,7 @@ const CloseYearModal = ({ currentYear, onClose, onConfirm, onError }) => {
             <div>
               <span className="font-medium text-gray-700">Período:</span>
               <p className="text-gray-600">
-                {new Date(currentYear?.start_date).toLocaleDateString('es-PE')} - {new Date(currentYear?.end_date).toLocaleDateString('es-PE')}
+                {formatDateSafe(currentYear?.start_date)} - {formatDateSafe(currentYear?.end_date)}
               </p>
             </div>
             <div>

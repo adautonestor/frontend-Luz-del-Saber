@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { usePaymentsStore } from '../stores/paymentsStore'
+import { parseDateOnly } from '../utils/dateUtils'
 
 /**
  * Hook para gestionar obligaciones de pago y registros
@@ -175,11 +176,11 @@ export const usePaymentObligations = () => {
 
     // Detectar si está vencido por la fecha
     if (obligation.due_date) {
-      const dueDate = new Date(obligation.due_date)
+      const dueDate = parseDateOnly(obligation.due_date)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      if (dueDate < today) {
+      if (dueDate && dueDate.getTime() < today.getTime()) {
         return 'vencido'
       }
     }

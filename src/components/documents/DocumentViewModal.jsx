@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { X, Download } from 'lucide-react'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 /**
  * Modal para ver/previsualizar documentos
@@ -104,7 +105,7 @@ const DocumentViewModal = ({
         <div className="p-6 border-t border-gray-200 bg-gray-50">
           <div className="flex justify-between">
             <div className="text-sm text-gray-500">
-              Subido el {new Date(selectedDocument.uploadDate).toLocaleDateString('es-PE')} por {selectedDocument.uploadedBy}
+              Subido el {formatDateSafe(selectedDocument.uploadDate)} por {selectedDocument.uploadedBy}
             </div>
             <div className="flex gap-3">
               <button

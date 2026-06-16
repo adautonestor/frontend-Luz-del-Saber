@@ -4,6 +4,7 @@ import {
   Users, Eye, Edit, Trash2, MessageSquare, Calendar,
   AlertCircle, Image, FileText, File
 } from 'lucide-react'
+import { parseDateOnly, formatDateSafe } from '../../utils/dateUtils'
 
 /**
  * Lista de comunicaciones con acciones (ver, editar, eliminar)
@@ -101,6 +102,7 @@ const TeacherCommunicationsList = ({
                     if (dest.type === 'padres') return 'Padres'
                     if (dest.type === 'profesores_y_padres') return 'Profesores y Padres'
                     if (dest.type === 'especifico' && dest.valores?.length) return `${dest.valores.length} usuario(s)`
+                    if (dest.type === 'estudiantes' && dest.valores?.length) return `Padres de ${dest.valores.length} estudiante(s)`
                     if (communication.estadisticas?.totalDestinatarios) return `${communication.estadisticas.totalDestinatarios} destinatarios`
                     if (communication.recipientCount) return `${communication.recipientCount} destinatarios`
                     return 'Sin destinatarios'
@@ -124,12 +126,12 @@ const TeacherCommunicationsList = ({
                 </div>
                 {(communication.due_date || communication.expirationDate) && (
                   <div className={`flex items-center gap-1 ${
-                    new Date(communication.due_date || communication.expirationDate) < new Date()
+                    ((parseDateOnly(communication.due_date || communication.expirationDate)?.getTime() || 0) < new Date().setHours(0,0,0,0))
                       ? 'text-red-600 font-semibold'
                       : 'text-orange-600'
                   }`}>
                     <AlertCircle className="w-4 h-4" />
-                    Vence: {new Date(communication.due_date || communication.expirationDate).toLocaleDateString('es-PE')}
+                    Vence: {formatDateSafe(communication.due_date || communication.expirationDate)}
                   </div>
                 )}
               </div>

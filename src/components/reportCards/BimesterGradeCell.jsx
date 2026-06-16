@@ -1,7 +1,7 @@
 import React from 'react'
 import { Clock, MessageSquare } from 'lucide-react'
 import { getGradeColor } from '@/utils/reportCards'
-import { convertNumericGradeToLetter, getLetterGradeColor, getLetterGradeDescription } from '@/utils/gradeConversion.jsx'
+import { convertAverageValueToLetter, getLetterGradeColor, getLetterGradeDescription } from '@/utils/gradeConversion.jsx'
 
 /**
  * Celda de nota de bimestre (reutilizable para los 4 bimestres)
@@ -42,11 +42,11 @@ const BimesterGradeCell = ({
         <div className="text-center">
           {showLetterGrades ? (
             <div>
-              <span className={`text-lg font-bold ${getLetterGradeColor(convertNumericGradeToLetter(grade))}`}>
-                {convertNumericGradeToLetter(grade)}
+              <span className={`text-lg font-bold ${getLetterGradeColor(convertAverageValueToLetter(grade))}`}>
+                {convertAverageValueToLetter(grade)}
               </span>
               <div className="text-xs text-gray-500 mt-1">
-                {getLetterGradeDescription(convertNumericGradeToLetter(grade))}
+                {getLetterGradeDescription(convertAverageValueToLetter(grade))}
               </div>
               <div className="text-xs text-gray-400">
                 (Numérico: {typeof grade === 'number' ? grade.toFixed(2) : grade})
@@ -67,8 +67,8 @@ const BimesterGradeCell = ({
                 <div className="flex items-start gap-1">
                   <span className="font-medium text-gray-700">{nota.description}:</span>
                   {showLetterGrades ? (
-                    <span className={getLetterGradeColor(convertNumericGradeToLetter(nota.valor))}>
-                      {convertNumericGradeToLetter(nota.valor)} ({typeof nota.valor === 'number' ? nota.valor.toFixed(2) : nota.valor})
+                    <span className={getLetterGradeColor(convertAverageValueToLetter(nota.valor))}>
+                      {convertAverageValueToLetter(nota.valor)} ({typeof nota.valor === 'number' ? nota.valor.toFixed(2) : nota.valor})
                     </span>
                   ) : (
                     <span className={getGradeColor(nota.valor, gradingSystem)}>

@@ -1,4 +1,5 @@
 import { calculateMora } from './moraCalculator.jsx'
+import { parseDateOnly } from '../dateUtils'
 
 /**
  * Utilidades para procesamiento y agrupación de obligaciones de pago
@@ -39,7 +40,7 @@ export function groupObligationsByPeriod(obligations, students = [], concepts = 
   const groupedObligations = {}
 
   obligations.forEach(obligation => {
-    const date = new Date(obligation.due_date)
+    const date = parseDateOnly(obligation.due_date) || new Date(obligation.due_date)
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
     if (!groupedObligations[key]) {
@@ -96,7 +97,7 @@ export function groupObligationsByPeriod(obligations, students = [], concepts = 
  */
 export function sortGroupedObligationsByDate(groupedObligations) {
   return Object.values(groupedObligations)
-    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+    .sort((a, b) => (parseDateOnly(a.due_date)?.getTime() || 0) - (parseDateOnly(b.due_date)?.getTime() || 0))
 }
 
 /**
@@ -138,8 +139,10 @@ export function getObligationStats(obligations) {
     pendientes: obligations.filter(o => o.state === 'pendiente').length,
     parciales: obligations.filter(o => o.state === 'parcial').length,
     vencidas: obligations.filter(o => {
-      const dueDate = new Date(o.due_date)
-      return (o.state === 'pendiente' || o.state === 'parcial') && dueDate < now
+      const dueDate = parseDateOnly(o.due_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return (o.state === 'pendiente' || o.state === 'parcial') && dueDate && dueDate.getTime() < today.getTime()
     }).length,
     total_amount: obligations.reduce((sum, o) => sum + (o.total_amount || 0), 0),
     paid_amount: obligations.reduce((sum, o) => sum + (o.paid_amount || 0), 0),
@@ -242,9 +245,10 @@ export function getStudentPaymentStatus(studentId, obligations) {
 
   const pendingCount = studentObligations.filter(o => o.state === 'pendiente' || o.state === 'parcial').length
   const overdueCount = studentObligations.filter(o => {
-    const now = new Date()
-    const dueDate = new Date(o.due_date)
-    return (o.state === 'pendiente' || o.state === 'parcial') && dueDate < now
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const dueDate = parseDateOnly(o.due_date)
+    return (o.state === 'pendiente' || o.state === 'parcial') && dueDate && dueDate.getTime() < today.getTime()
   }).length
   const totalPending = studentObligations
     .filter(o => o.state === 'pendiente' || o.state === 'parcial')

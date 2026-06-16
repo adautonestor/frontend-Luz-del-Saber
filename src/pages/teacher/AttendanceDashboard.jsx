@@ -131,10 +131,7 @@ const AttendanceDashboard = () => {
             getStatusColor={state.getStatusColor}
             getStatusText={state.getStatusText}
             handleRegisterAttendance={state.handleRegisterAttendance}
-            toggleLateJustified={state.toggleLateJustified}
-            toggleAbsenceJustified={state.toggleAbsenceJustified}
-            setSelectedRecord={state.setSelectedRecord}
-            setShowJustifyModal={state.setShowJustifyModal}
+            openJustifyModal={state.openJustifyModal}
             saving={state.saving}
           />
         </>
@@ -181,10 +178,12 @@ const AttendanceDashboard = () => {
       <JustifyModal
         showJustifyModal={state.showJustifyModal}
         selectedRecord={state.selectedRecord}
+        justifyMode={state.justifyMode}
         justification={state.justification}
         setJustification={state.setJustification}
         setShowJustifyModal={state.setShowJustifyModal}
-        handleJustifyTardanza={state.handleJustifyTardanza}
+        handleJustify={state.handleJustify}
+        handleRemoveJustification={state.handleRemoveJustification}
         saving={state.saving}
       />
     </div>

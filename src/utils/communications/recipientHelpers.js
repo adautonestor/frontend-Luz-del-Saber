@@ -68,6 +68,12 @@ export const getRecipientCount = (comm, levels = [], grades = [], sections = [],
         }
       }
       return '1 usuario específico'
+    case 'estudiantes':
+      if (destinatarios.valores && destinatarios.valores.length > 0) {
+        const n = destinatarios.valores.length
+        return n === 1 ? 'Padres de 1 estudiante' : `Padres de ${n} estudiantes`
+      }
+      return 'Padres de estudiantes seleccionados'
     default:
       return 'Destinatarios'
   }

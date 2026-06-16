@@ -4,6 +4,7 @@ import { Brain, Download, Eye, Calendar, FileText, AlertCircle } from 'lucide-re
 import { useAuthStore } from '@/stores/authStore';
 import { psychologicalReportsService } from '../../services/psychologicalReportsService'
 import { studentsService } from '../../services/studentsService'
+import { parseDateOnly, formatDateSafe } from '../../utils/dateUtils'
 
 export default function ParentPsychologicalReports() {
   const { user } = useAuthStore();
@@ -238,11 +239,7 @@ export default function ParentPsychologicalReports() {
                         Fecha de Emisión
                       </label>
                       <p className="text-lg font-semibold text-gray-900">
-                        {new Date(currentYearReport.issue_date).toLocaleDateString('es-PE', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
+                        {(() => { const d = parseDateOnly(currentYearReport.issue_date); return d ? d.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' })()}
                       </p>
                     </div>
                     <div>
@@ -285,7 +282,7 @@ export default function ParentPsychologicalReports() {
                   </div>
 
                   <div className="mt-4 text-xs text-gray-500 text-center">
-                    Subido el {new Date(currentYearReport.upload_date).toLocaleDateString('es-PE')}
+                    Subido el {formatDateSafe(currentYearReport.upload_date)}
                   </div>
                 </div>
               </div>
@@ -339,7 +336,7 @@ export default function ParentPsychologicalReports() {
                                 Año Lectivo {report.academic_year}
                               </h4>
                               <p className="text-sm text-gray-600">
-                                Emitido: {new Date(report.issue_date).toLocaleDateString('es-PE')}
+                                Emitido: {formatDateSafe(report.issue_date)}
                               </p>
                             </div>
                           </div>

@@ -9,6 +9,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { schedulesService } from '../../services/schedulesService'
 import { courseAssignmentsService } from '../../services/courseAssignmentsService'
 import { get } from '../../services/api'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 const TeacherSchedule = () => {
   const { user } = useAuthStore()
@@ -272,7 +273,7 @@ const TeacherSchedule = () => {
                                   {horario.title || `Horario ${index + 1}`}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {horario.description || `Subido: ${new Date(horario.upload_date).toLocaleDateString('es-PE')}`}
+                                  {horario.description || `Subido: ${formatDateSafe(horario.upload_date)}`}
                                 </p>
                               </div>
                             </div>

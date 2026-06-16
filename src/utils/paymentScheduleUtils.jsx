@@ -1,4 +1,5 @@
 import { CheckCircle, Clock, AlertCircle, Loader2, XCircle } from 'lucide-react'
+import { parseDateOnly } from './dateUtils'
 
 /**
  * Utilidades para el Cronograma de Pagos Familiar
@@ -233,15 +234,16 @@ export const getPaymentStatistics = (payments) => {
   }
 
   const now = new Date()
+  now.setHours(0, 0, 0, 0)
 
   return {
     total: payments.length,
     pagados: payments.filter(p => p.state === 'pagado').length,
     pendientes: payments.filter(p => p.state === 'pendiente').length,
-    vencidos: payments.filter(p =>
-      p.state === 'pendiente' &&
-      new Date(p.due_date) < now
-    ).length,
+    vencidos: payments.filter(p => {
+      const due = parseDateOnly(p.due_date)
+      return p.state === 'pendiente' && due && due.getTime() < now.getTime()
+    }).length,
     total_amount: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
     montoPendiente: payments.reduce((sum, p) => sum + (p.saldo || 0), 0)
   }
@@ -259,8 +261,8 @@ export const sortPaymentsByDueDate = (payments, order = 'asc') => {
   }
 
   return [...payments].sort((a, b) => {
-    const dateA = new Date(a.due_date)
-    const dateB = new Date(b.due_date)
+    const dateA = parseDateOnly(a.due_date)?.getTime() || 0
+    const dateB = parseDateOnly(b.due_date)?.getTime() || 0
 
     return order === 'asc' ? dateA - dateB : dateB - dateA
   })

@@ -184,7 +184,7 @@ const CourseBasicInfoFields = ({ courseForm, setCourseForm, selectedCourse, leve
             min="1"
             className="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
             value={courseForm.horasSemanales}
-            onChange={(e) => setCourseForm(prev => ({ ...prev, horasSemanales: e.target.value }))}
+            onChange={(e) => setCourseForm(prev => ({ ...prev, horasSemanales: e.target.value ? parseInt(e.target.value) : '' }))}
           />
         </div>
       </div>

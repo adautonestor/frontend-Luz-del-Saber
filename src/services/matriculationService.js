@@ -105,6 +105,37 @@ export const matriculationService = {
   },
 
   /**
+   * Actualizar matrícula EN CASCADA (matrícula + estudiante + secciones + cronograma)
+   * @param {number} id - ID de la matrícula
+   * @param {Object} data - { academic_year_id, level_id, grade_id, section_id, observations, paymentSchedule? }
+   * @returns {Promise<Object>} Resultado con resumen de cambios y pagos
+   */
+  async updateCascade(id, data) {
+    try {
+      const response = await put(`/matriculation/${id}/cascade`, data)
+      return response.data || response
+    } catch (error) {
+      console.error(`Error al actualizar matrícula en cascada ${id}:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Obtener el impacto de editar una matrícula (notas/pagos existentes) para advertir
+   * @param {number} id - ID de la matrícula
+   * @returns {Promise<Object>} { hasGrades, hasPaidObligations, pendingObligationsCount, ... }
+   */
+  async getEditImpact(id) {
+    try {
+      const response = await get(`/matriculation/${id}/edit-impact`)
+      return response.data || response
+    } catch (error) {
+      console.error(`Error al obtener impacto de edición ${id}:`, error)
+      throw error
+    }
+  },
+
+  /**
    * Eliminar matrícula
    * @param {number} id - ID de la matrícula
    * @returns {Promise<Object>} Confirmación

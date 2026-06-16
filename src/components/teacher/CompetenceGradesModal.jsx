@@ -4,6 +4,7 @@ import {
   X, Plus, Trash2, Save, Calculator,
   Edit2, Check, AlertCircle, BookOpen
 } from 'lucide-react'
+import { getGradingScalesStore } from '../../stores/gradingScalesStore'
 
 const CompetenceGradesModal = ({
   isOpen,
@@ -45,16 +46,15 @@ const CompetenceGradesModal = ({
     }
   }, [isOpen, initialGrades])
 
-  // Validación de calificación según el sistema
-  // NOTA: Los valores válidos se configuran desde /api/system-settings/grading-scales
-  // Esta validación es un fallback con valores por defecto
+  // Validación de calificación según el sistema - usa store dinámico
   const validateGrade = (value) => {
     if (gradingSystem === 'vigesimal' || gradingSystem === 'secundaria') {
       const numValue = parseFloat(value)
       return !isNaN(numValue) && numValue >= 0 && numValue <= 20
     } else {
-      // Sistema literal: A, B, C, D (valores numéricos: A=4, B=3, C=2, D=1)
-      return ['A', 'B', 'C', 'D'].includes(value.toUpperCase())
+      // Validar contra la escala configurada dinámicamente
+      const store = getGradingScalesStore()
+      return store.convertLetterToNumeric(value.toUpperCase(), student?.level_id) !== null
     }
   }
 

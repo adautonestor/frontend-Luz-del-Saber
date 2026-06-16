@@ -22,6 +22,7 @@ import TeacherDocuments from '../teacher/TeacherDocuments'
 import AttendanceScannerPage from '../../pages/admin/AttendanceScannerPage'
 import HighPriorityMessagePopup from '../common/HighPriorityMessagePopup'
 import NotificationsDropdown from '../common/NotificationsDropdown'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 const TeacherLayout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
@@ -590,7 +591,7 @@ const TeacherDashboard = () => {
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Bell size={12} />
-                      {new Date(aviso.fechaCreacion).toLocaleDateString('es-PE')}
+                      {formatDateSafe(aviso.fechaCreacion)}
                     </span>
                     {aviso.enlace && (
                       <a

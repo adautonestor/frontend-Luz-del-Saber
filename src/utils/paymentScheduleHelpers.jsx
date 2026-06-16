@@ -6,6 +6,7 @@
 import * as XLSX from 'xlsx'
 import { CheckCircle, Clock, AlertCircle, X, Loader2, CircleDot } from 'lucide-react'
 import { PAYMENT_STATUS_COLORS, EXCEL_COLUMN_WIDTHS, EXCEL_TABLE_HEADERS_BASE, EXCEL_TABLE_HEADERS_EXTENDED, STATUS_LABELS } from '../config/paymentScheduleConstants'
+import { parseDateOnly } from './dateUtils'
 
 /**
  * TODO: Esta función debe ser reemplazada por:
@@ -83,7 +84,7 @@ export const loadFamilyPaymentSchedule = (students = [], paymentObligations = []
       return yearB - yearA // Descendente por año
     }
 
-    return new Date(a.due_date) - new Date(b.due_date)
+    return (parseDateOnly(a.due_date)?.getTime() || 0) - (parseDateOnly(b.due_date)?.getTime() || 0)
   })
 
   return {
@@ -133,10 +134,10 @@ export const getPaymentStatus = (payment) => {
 
   // Verificar si está vencido por la fecha
   if (payment.due_date) {
-    const dueDate = new Date(payment.due_date)
+    const dueDate = parseDateOnly(payment.due_date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    if (dueDate < today) return 'vencido'
+    if (dueDate && dueDate.getTime() < today.getTime()) return 'vencido'
   }
 
   return 'pendiente'

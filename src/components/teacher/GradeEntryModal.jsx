@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X, Save, MessageCircle, FileText, AlertCircle } from 'lucide-react'
 import { useGradesStore } from '../../stores/gradesStore.jsx'
+import { getLetterGradeDescription } from '@/utils/gradeConversion.jsx'
 
 const GradeEntryModal = ({ 
   student, 
@@ -92,20 +93,13 @@ const GradeEntryModal = ({
 
   const getGradingDescription = (value) => {
     if (!value) return ''
-    
     if (isNumericGrading) {
       const num = parseFloat(value)
-      if (num >= 18) return 'Logro destacado'
-      if (num >= 14) return 'Logro esperado'
-      if (num >= 11) return 'En proceso'
-      return 'En inicio'
-    } else {
-      const config = {
-        inicial: { 'A': 'Logro destacado', 'B': 'Logro esperado', 'C': 'En inicio' },
-        primaria: { 'AD': 'Logro destacado', 'A': 'Logro esperado', 'B': 'En proceso', 'C': 'En inicio' }
-      }
-      return config[gradingSystem]?.[value] || ''
+      if (isNaN(num)) return ''
+      // Usar getLetterGradeDescription del store dinámico
+      return getLetterGradeDescription(value, student?.level_id)
     }
+    return getLetterGradeDescription(value, student?.level_id)
   }
 
   return (

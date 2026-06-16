@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { usePaymentsStore } from '../stores/paymentsStore'
 import { useAcademicStore } from '../stores/academicStore'
 import studentsService from '../services/studentsService'
+import { parseDateOnly } from '../utils/dateUtils'
 
 /**
  * Hook para gestionar conceptos de pago
@@ -69,9 +70,16 @@ export const usePaymentConcepts = () => {
       // Convertir fecha ISO a formato YYYY-MM-DD si existe
       let formattedDate = ''
       if (concept.unique_payment_date) {
-        const date = new Date(concept.unique_payment_date)
-        if (!isNaN(date.getTime())) {
-          formattedDate = date.toISOString().split('T')[0]
+        if (typeof concept.unique_payment_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(concept.unique_payment_date)) {
+          formattedDate = concept.unique_payment_date
+        } else {
+          const date = parseDateOnly(concept.unique_payment_date) || new Date(concept.unique_payment_date)
+          if (date && !isNaN(date.getTime())) {
+            const y = date.getFullYear()
+            const m = String(date.getMonth() + 1).padStart(2, '0')
+            const d = String(date.getDate()).padStart(2, '0')
+            formattedDate = `${y}-${m}-${d}`
+          }
         }
       }
 

@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Eye, Download, Trash2 } from 'lucide-react'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 /**
  * Tarjeta de documento individual
@@ -84,7 +85,7 @@ const DocumentCard = ({
           <div className="flex justify-between">
             <span>Subido:</span>
             <span className="font-medium">
-              {new Date(doc.uploadDate).toLocaleDateString('es-PE')}
+              {formatDateSafe(doc.uploadDate)}
             </span>
           </div>
           <div className="flex justify-between">

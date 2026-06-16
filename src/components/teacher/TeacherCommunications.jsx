@@ -26,11 +26,6 @@ const TeacherCommunications = () => {
 
   // Handlers para el modal de nuevo comunicado
   const handleSelectGrade = (grado, seccion) => {
-    if (grado === null) {
-      // Limpiar selección
-      state.toggleStudentSelection.call(null)
-      return
-    }
     state.selectAllFromGrade(grado, seccion)
   }
 

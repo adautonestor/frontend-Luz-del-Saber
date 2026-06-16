@@ -9,6 +9,7 @@ import { usePaymentsStore } from '../../stores/paymentsStore'
 import ManualPaymentModal from '../../components/admin/ManualPaymentModal'
 import studentsService from '../../services/studentsService'
 import { calculateMora, calculateDaysLate } from '../../utils/payments/moraCalculator.jsx'
+import { parseDateOnly, formatDateSafe } from '../../utils/dateUtils'
 
 const PaymentManagementPage = () => {
   const [activeTab, setActiveTab] = useState('obligations')
@@ -57,8 +58,10 @@ const PaymentManagementPage = () => {
 
   // Estadísticas
   const overdueObligationsList = obligations.filter(o => {
-    const dueDate = new Date(o.due_date)
-    return dueDate < new Date() && o.state === 'pendiente'
+    const dueDate = parseDateOnly(o.due_date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return dueDate && dueDate.getTime() < today.getTime() && o.state === 'pendiente'
   })
 
   const stats = {
@@ -122,8 +125,10 @@ const PaymentManagementPage = () => {
   }
 
   const isOverdue = (obligation) => {
-    const dueDate = new Date(obligation.due_date)
-    return dueDate < new Date() && obligation.state === 'pendiente'
+    const dueDate = parseDateOnly(obligation.due_date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return dueDate && dueDate.getTime() < today.getTime() && obligation.state === 'pendiente'
   }
 
   return (
@@ -337,7 +342,7 @@ const PaymentManagementPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className={`text-sm ${overdue ? 'text-red-600 font-semibold' : 'text-gray-900'}`}>
-                        {new Date(obligation.due_date).toLocaleDateString('es-PE')}
+                        {formatDateSafe(obligation.due_date)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

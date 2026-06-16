@@ -133,22 +133,25 @@ export const useCoursesStore = create((set, get) => ({
       }
 
       for (const course of teacherCourses) {
-        // Encontrar la asignación del curso para obtener el grade_id
-        const assignment = (allAssignments || []).find(a => a.course_id === course.id)
+        // Obtener TODAS las asignaciones del curso (puede tener múltiples grados)
+        const courseAssignments = (allAssignments || []).filter(a => a.course_id === course.id)
 
-        if (!assignment) {
+        if (courseAssignments.length === 0) {
           studentsByCourse[course.id] = []
           courseAverages[course.id] = null
           continue
         }
 
-        // Filtrar estudiantes del grado asignado
+        // Recopilar todos los grade_ids asignados al curso
+        const assignedGradeIds = new Set(courseAssignments.map(a => a.grade_id))
+
+        // Filtrar estudiantes de TODOS los grados asignados
         const courseStudents = allStudents
           .filter(student => {
             const studentGradeId = student.grade_id
             const studentStatus = student.status
-            // Filtrar por grado del assignment y estudiantes matriculados
-            return studentGradeId === assignment.grade_id && studentStatus === 'enrolled'
+            // Filtrar por cualquier grado del curso y estudiantes matriculados
+            return assignedGradeIds.has(studentGradeId) && studentStatus === 'enrolled'
           })
           .map(student => ({
             ...student,

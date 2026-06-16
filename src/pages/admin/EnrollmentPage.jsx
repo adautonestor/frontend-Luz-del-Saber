@@ -19,6 +19,7 @@ import PaymentScheduleViewerModal from '../../components/admin/PaymentScheduleVi
 import StudentsTab from '../../components/enrollment/StudentsTab'
 import CreateStudentModal from '../../components/enrollment/CreateStudentModal'
 import EditStudentModal from '../../components/enrollment/EditStudentModal'
+import EditPaymentScheduleModal from '../../components/enrollment/EditPaymentScheduleModal'
 import RejectRequestModal from '../../components/enrollment/modals/RejectRequestModal'
 import ViewStudentModal from '../../components/enrollment/modals/ViewStudentModal'
 import ExportModal from '../../components/enrollment/modals/ExportModal'
@@ -54,6 +55,8 @@ const EnrollmentPage = () => {
   const activeTab = 'students'
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState(null)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [scheduleStudent, setScheduleStudent] = useState(null)
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
@@ -570,6 +573,10 @@ const EnrollmentPage = () => {
           setSelectedStudent(student)
           setShowEditModal(true)
         }}
+        onEditSchedule={(student) => {
+          setScheduleStudent(student)
+          setShowScheduleModal(true)
+        }}
         setSelectedStudentForContract={setSelectedStudentForContract}
         setShowContractModal={setShowContractModal}
         setViewingStudent={setViewingStudent}
@@ -590,6 +597,24 @@ const EnrollmentPage = () => {
             setShowEditModal(false)
             setSelectedStudent(null)
             initialize() // Refresh data
+          }}
+        />
+      )}
+
+      {/* Payment Schedule Edit Modal */}
+      {showScheduleModal && scheduleStudent && (
+        <EditPaymentScheduleModal
+          student={scheduleStudent}
+          onClose={() => {
+            setShowScheduleModal(false)
+            setScheduleStudent(null)
+          }}
+          onSuccess={() => {
+            setShowScheduleModal(false)
+            setScheduleStudent(null)
+            setSuccessMessage('Cronograma de pagos actualizado exitosamente')
+            setShowSuccessModal(true)
+            initialize()
           }}
         />
       )}

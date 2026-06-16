@@ -1,7 +1,7 @@
 import React from 'react'
 import {
   Search, Filter, Eye, Edit, Trash2,
-  Download, FileText,
+  Download, FileText, Calendar,
   CheckCircle, Clock, XCircle, UserCheck
 } from 'lucide-react'
 import jsPDF from 'jspdf'
@@ -21,6 +21,7 @@ const StudentsTab = ({
   getStatusIcon,
   getStatusColor,
   onEditStudent,
+  onEditSchedule,
   setSelectedStudentForContract,
   setShowContractModal,
   setViewingStudent,
@@ -393,6 +394,13 @@ const StudentsTab = ({
                             title="Editar"
                           >
                             <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => onEditSchedule && onEditSchedule(student)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="Editar cronograma de pagos"
+                          >
+                            <Calendar size={18} />
                           </button>
                           <button
                             onClick={() => {

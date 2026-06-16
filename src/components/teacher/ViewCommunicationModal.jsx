@@ -4,6 +4,7 @@ import {
   X, Calendar, AlertCircle, Users, Eye, MessageSquare, Clock,
   Download, ZoomIn, ZoomOut, File
 } from 'lucide-react'
+import { parseDateOnly } from '../../utils/dateUtils'
 
 /**
  * Modal para ver detalles completos de un comunicado
@@ -67,16 +68,12 @@ const ViewCommunicationModal = ({
               </div>
               {communication.due_date && (
                 <div className={`flex items-center gap-1 ${
-                  new Date(communication.due_date) < new Date()
+                  ((parseDateOnly(communication.due_date)?.getTime() || 0) < new Date().setHours(0,0,0,0))
                     ? 'text-red-600 font-semibold'
                     : 'text-orange-600 font-medium'
                 }`}>
                   <AlertCircle className="w-4 h-4" />
-                  Vence: {new Date(communication.due_date).toLocaleDateString('es-PE', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
+                  Vence: {(() => { const d = parseDateOnly(communication.due_date); return d ? d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' })()}
                 </div>
               )}
             </div>

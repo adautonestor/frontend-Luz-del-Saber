@@ -3,6 +3,7 @@
  * Funciones puras para generar diferentes tipos de reportes del sistema
  * Todos los datos deben ser provistos por el llamador desde servicios/stores
  */
+import { parseDateOnly } from './dateUtils'
 
 /**
  * Genera reporte de estudiantes desaprobados
@@ -236,9 +237,10 @@ export const generateDelinquentParentsReport = (
 
   // Identificar pagos vencidos
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const delinquentObligations = obligations.filter(obligation => {
-    const dueDate = new Date(obligation.due_date)
-    return dueDate < today && obligation.state === 'pendiente'
+    const dueDate = parseDateOnly(obligation.due_date)
+    return dueDate && dueDate.getTime() < today.getTime() && obligation.state === 'pendiente'
   })
 
   console.log('  - Delinquent obligations:', delinquentObligations.length)
@@ -316,7 +318,9 @@ export const generateDelinquentParentsReport = (
     parent_data.obligationsCount += 1
 
     // Actualizar la deuda más antigua
-    if (new Date(obligation.due_date) < new Date(parent_data.oldestDebt)) {
+    const oblDate = parseDateOnly(obligation.due_date)
+    const oldestDate = parseDateOnly(parent_data.oldestDebt)
+    if (oblDate && oldestDate && oblDate.getTime() < oldestDate.getTime()) {
       parent_data.oldestDebt = obligation.due_date
     }
 

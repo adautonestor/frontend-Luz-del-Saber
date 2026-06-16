@@ -203,7 +203,7 @@ export async function generateCustomPaymentSchedule(student, customPayments, ano
         concept_id: conceptId,
         academic_year: anoLectivo,
         due_month: payment.due_month || null,
-        due_date: new Date(payment.due_date).toISOString().split('T')[0],
+        due_date: typeof payment.due_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(payment.due_date) ? payment.due_date : new Date(payment.due_date).toISOString().split('T')[0],
         total_amount: payment.total_amount,
         paid_amount: 0,
         pending_balance: payment.total_amount,

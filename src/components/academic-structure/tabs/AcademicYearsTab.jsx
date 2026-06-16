@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { academicYearService } from '../../../services/academic/academicYearService'
 import { academicYearTypesService } from '../../../services/academic/academicYearTypesService'
+import { parseDateOnly, formatDateSafe } from '../../../utils/dateUtils'
 
 /**
  * Tab de gestión de años lectivos
@@ -419,11 +420,10 @@ const AcademicYearsTab = ({
 
       {/* Alerta de fecha de fin vencida */}
       {currentAcademicYear && (currentAcademicYear.state === 'activo' || currentAcademicYear.status === 'active') && (() => {
-        const endDate = new Date(currentAcademicYear.end_date || currentAcademicYear.fechaFin)
+        const endDate = parseDateOnly(currentAcademicYear.end_date || currentAcademicYear.fechaFin)
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        endDate.setHours(0, 0, 0, 0)
-        const isExpired = endDate <= today
+        const isExpired = endDate && endDate.getTime() <= today.getTime()
 
         if (!isExpired) return null
 
@@ -439,7 +439,7 @@ const AcademicYearsTab = ({
                 </h3>
                 <p className="text-sm text-red-700 mb-3">
                   El año lectivo <strong>"{currentAcademicYear.name}"</strong> tenía como fecha de fin el{' '}
-                  <strong>{new Date(currentAcademicYear.end_date || currentAcademicYear.fechaFin).toLocaleDateString('es-PE')}</strong>.
+                  <strong>{formatDateSafe(currentAcademicYear.end_date || currentAcademicYear.fechaFin)}</strong>.
                   Es necesario cerrar este año lectivo para mantener la integridad de los datos académicos.
                 </p>
                 <button
@@ -471,10 +471,10 @@ const AcademicYearsTab = ({
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                 <div>
-                  <span className="font-medium">Inicio:</span> {new Date(currentAcademicYear.start_date).toLocaleDateString('es-PE')}
+                  <span className="font-medium">Inicio:</span> {formatDateSafe(currentAcademicYear.start_date)}
                 </div>
                 <div>
-                  <span className="font-medium">Fin:</span> {new Date(currentAcademicYear.end_date).toLocaleDateString('es-PE')}
+                  <span className="font-medium">Fin:</span> {formatDateSafe(currentAcademicYear.end_date)}
                 </div>
               </div>
             </div>
@@ -532,7 +532,7 @@ const AcademicYearsTab = ({
                       </h4>
                       <div className="flex gap-4 text-sm text-gray-600">
                         <span>
-                          {new Date(year.start_date).toLocaleDateString('es-PE')} - {new Date(year.end_date).toLocaleDateString('es-PE')}
+                          {formatDateSafe(year.start_date)} - {formatDateSafe(year.end_date)}
                         </span>
                         <span className={`px-2 py-1 text-xs rounded-full border ${getYearStatusColor(year.state || 'planificado')}`}>
                           {year.state || 'planificado'}

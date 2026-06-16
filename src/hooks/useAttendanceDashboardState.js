@@ -3,7 +3,6 @@ import { useAttendanceStore } from '../stores/attendanceStore'
 import { useCoursesStore } from '../stores/coursesStore'
 import { useAcademicStore } from '../stores/academicStore'
 import studentsService from '../services/studentsService'
-import { attendanceService } from '../services/attendanceService'
 import * as XLSX from 'xlsx'
 import { getTodayLima } from '../utils/dateUtils'
 
@@ -16,7 +15,9 @@ export const useAttendanceDashboardState = (user) => {
     getClassAttendance,
     getMonthlyStats,
     registerManualAttendance,
-    justifyLateArrival
+    justifyLateArrival,
+    justifyAbsence,
+    removeJustification
   } = useAttendanceStore()
 
   const coursesStore = useCoursesStore()
@@ -36,6 +37,7 @@ export const useAttendanceDashboardState = (user) => {
   const [showJustifyModal, setShowJustifyModal] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [justification, setJustification] = useState('')
+  const [justifyMode, setJustifyMode] = useState('tardanza') // 'tardanza' | 'falta'
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -134,23 +136,27 @@ export const useAttendanceDashboardState = (user) => {
     }
   }
 
-  const loadClassData = () => {
+  const loadClassData = async () => {
     if (!selectedCourse || !selectedSection) return
 
-    const data = getClassAttendance(
-      selectedCourse.grade_id,
-      selectedSection.id,
-      selectedDate
-    )
-
-    setClassData(data)
+    try {
+      const data = await getClassAttendance(
+        selectedCourse.grade_id,
+        selectedSection.id,
+        selectedDate
+      )
+      setClassData(data)
+    } catch (error) {
+      console.error('Error cargando datos de la clase:', error)
+      setClassData(null)
+    }
   }
 
   const handleRegisterAttendance = async (studentId, estado) => {
     try {
       setSaving(true)
-      await registerManualAttendance(studentId, selectedDate, estado, user.id)
-      loadClassData()
+      await registerManualAttendance(studentId, selectedDate, estado, user.id, selectedQuarter)
+      await loadClassData()
       setSaving(false)
     } catch (error) {
       console.error('Error registrando asistencia:', error)
@@ -159,7 +165,28 @@ export const useAttendanceDashboardState = (user) => {
     }
   }
 
-  const handleJustifyTardanza = async () => {
+  /**
+   * Abre el modal de justificación para una tardanza o una falta.
+   * Precarga el comentario existente si ya estaba justificada.
+   * @param {Object} record - registro mapeado de la clase
+   * @param {'tardanza'|'falta'} mode
+   */
+  const openJustifyModal = (record, mode) => {
+    setSelectedRecord(record)
+    setJustifyMode(mode)
+    setJustification(
+      mode === 'falta'
+        ? (record.justificacionFalta || '')
+        : (record.justificacionTardanza || '')
+    )
+    setShowJustifyModal(true)
+  }
+
+  /**
+   * Guarda la justificación (con comentario) de la tardanza o falta seleccionada.
+   */
+  const handleJustify = async () => {
+    if (!selectedRecord) return
     if (!justification.trim()) {
       alert('Por favor ingrese una justificación')
       return
@@ -167,60 +194,45 @@ export const useAttendanceDashboardState = (user) => {
 
     try {
       setSaving(true)
-      await justifyLateArrival(selectedRecord.id, justification, user.id)
+      if (justifyMode === 'falta') {
+        await justifyAbsence(selectedRecord.id, justification.trim(), user.id)
+      } else {
+        await justifyLateArrival(selectedRecord.id, justification.trim(), user.id)
+      }
       setShowJustifyModal(false)
       setJustification('')
       setSelectedRecord(null)
-      loadClassData()
+      await loadClassData()
       setSaving(false)
     } catch (error) {
-      console.error('Error justificando tardanza:', error)
+      console.error('Error guardando justificación:', error)
       setSaving(false)
-      alert('Error al justificar tardanza: ' + error.message)
+      alert('Error al guardar la justificación: ' + error.message)
     }
   }
 
   /**
-   * Toggle de justificación de tardanza (solo botón, sin comentarios)
+   * Quita la justificación de la tardanza o falta seleccionada.
    */
-  const toggleLateJustified = async (recordId) => {
+  const handleRemoveJustification = async () => {
+    if (!selectedRecord) return
     try {
       setSaving(true)
-      const record = classData?.records?.find(r => r.id === recordId)
-      if (!record) return
-
-      await attendanceService.updateRecord(recordId, {
-        late_justified: !record.tardanzaJustificada
-      })
-      loadClassData()
+      await removeJustification(selectedRecord.id, justifyMode)
+      setShowJustifyModal(false)
+      setJustification('')
+      setSelectedRecord(null)
+      await loadClassData()
       setSaving(false)
     } catch (error) {
-      console.error('Error toggling late justified:', error)
+      console.error('Error quitando justificación:', error)
       setSaving(false)
-      alert('Error al cambiar justificación: ' + error.message)
+      alert('Error al quitar la justificación: ' + error.message)
     }
   }
 
-  /**
-   * Toggle de justificación de inasistencia (solo botón, sin comentarios)
-   */
-  const toggleAbsenceJustified = async (recordId) => {
-    try {
-      setSaving(true)
-      const record = classData?.records?.find(r => r.id === recordId)
-      if (!record) return
-
-      await attendanceService.updateRecord(recordId, {
-        absence_justified: !record.faltaJustificada
-      })
-      loadClassData()
-      setSaving(false)
-    } catch (error) {
-      console.error('Error toggling absence justified:', error)
-      setSaving(false)
-      alert('Error al cambiar justificación: ' + error.message)
-    }
-  }
+  // Compatibilidad: la justificación de tardanza ahora pasa por el mismo modal.
+  const handleJustifyTardanza = handleJustify
 
   const exportToExcel = async () => {
     if (!selectedCourse || !selectedSection || !classData) return
@@ -376,13 +388,16 @@ export const useAttendanceDashboardState = (user) => {
     setSelectedRecord,
     justification,
     setJustification,
+    justifyMode,
+    setJustifyMode,
     saving,
 
     // Functions
     handleRegisterAttendance,
+    handleJustify,
     handleJustifyTardanza,
-    toggleLateJustified,
-    toggleAbsenceJustified,
+    handleRemoveJustification,
+    openJustifyModal,
     exportToExcel,
     getStatusColor,
     getStatusText,

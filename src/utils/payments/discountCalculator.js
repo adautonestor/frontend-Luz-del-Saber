@@ -50,15 +50,15 @@ export async function calculateDiscount(cantidadHijos, nivel) {
  * @returns {Promise<number>} Porcentaje de descuento
  */
 export async function getStudentDiscount(student) {
-  const parent_id = student.parent_id || student.parent_id
-  if (!padreId) return 0
+  const parentId = student.parent_id || student.padreId
+  if (!parentId) return 0
 
   try {
     // Obtener todos los estudiantes del mismo padre
     const allStudents = await studentsService.getAll()
     const siblings = allStudents.filter(s => {
-      const studentPadreId = s.parent_id || s.parent_id
-      return studentPadreId === padreId
+      const studentParentId = s.parent_id || s.padreId
+      return studentParentId === parentId
     })
 
     const numberOfChildren = siblings.length

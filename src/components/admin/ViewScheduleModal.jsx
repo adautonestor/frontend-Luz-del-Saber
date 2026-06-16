@@ -162,7 +162,7 @@ const ViewScheduleModal = ({
         <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-500">
-              Subido el {new Date(selectedImage.uploadDate).toLocaleDateString()} por {selectedImage.uploadedBy}
+              Subido el {new Date(selectedImage.uploadDate).toLocaleDateString('es-PE', { timeZone: 'America/Lima' })} por {selectedImage.uploadedBy}
             </div>
             <div className="flex gap-3">
               <button

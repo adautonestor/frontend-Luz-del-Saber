@@ -25,8 +25,9 @@ export const useStudentSearch = (students, formData, handleChange, setSelectedPa
   const filteredStudents = availableStudents.filter(student => {
     if (!searchStudent) return true
     const searchLower = searchStudent.toLowerCase()
-    const apellidos = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names || ''
-    const fullName = `${student.first_names} ${apellidos}`.toLowerCase()
+    const apellidos = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim()
+    const nombres = [student.first_names, student.last_names].filter(Boolean).join(' ')
+    const fullName = `${nombres} ${apellidos}`.toLowerCase()
     return fullName.includes(searchLower) || apellidos.toLowerCase().includes(searchLower)
   })
 
@@ -48,8 +49,9 @@ export const useStudentSearch = (students, formData, handleChange, setSelectedPa
 
             if (existingMatriculation) {
               if (setError) {
-                const apellidosStr = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names || ''
-                setError(`El estudiante "${student.first_names} ${apellidosStr}" ya tiene una matrícula activa en el año lectivo seleccionado.\n\nNo es posible crear otra matrícula para el mismo año.`)
+                const apellidosStr = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim()
+                const nombresStr = [student.first_names, student.last_names].filter(Boolean).join(' ')
+                setError(`El estudiante "${nombresStr} ${apellidosStr}" ya tiene una matrícula activa en el año lectivo seleccionado.\n\nNo es posible crear otra matrícula para el mismo año.`)
               }
               return // No continuar con la selección
             }
@@ -59,8 +61,9 @@ export const useStudentSearch = (students, formData, handleChange, setSelectedPa
         }
 
         setFoundStudent(student)
-        const searchApellidos = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || student.last_names || ''
-        setSearchStudent(`${searchApellidos}, ${student.first_names}`)
+        const searchApellidos = `${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim()
+        const searchNombres = [student.first_names, student.last_names].filter(Boolean).join(' ')
+        setSearchStudent(`${searchApellidos}, ${searchNombres}`)
         setShowStudentDropdown(false)
 
         // Actualizar formData usando handleChange
@@ -157,8 +160,9 @@ export const useStudentSearch = (students, formData, handleChange, setSelectedPa
 
     // Si el usuario está escribiendo y el texto no coincide con el estudiante seleccionado,
     // limpiar la selección para permitir nueva búsqueda
-    const foundApellidos = foundStudent ? (`${foundStudent.paternal_last_name || ''} ${foundStudent.maternal_last_name || ''}`.trim() || foundStudent.last_names || '') : ''
-    if (foundStudent && newValue !== `${foundApellidos}, ${foundStudent.first_names}`) {
+    const foundApellidos = foundStudent ? `${foundStudent.paternal_last_name || ''} ${foundStudent.maternal_last_name || ''}`.trim() : ''
+    const foundNombres = foundStudent ? [foundStudent.first_names, foundStudent.last_names].filter(Boolean).join(' ') : ''
+    if (foundStudent && newValue !== `${foundApellidos}, ${foundNombres}`) {
       setFoundStudent(null)
       setStudentParent(null)
       setSelectedParentId('')

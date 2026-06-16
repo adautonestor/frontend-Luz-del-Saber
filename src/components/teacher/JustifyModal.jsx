@@ -1,16 +1,37 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
+import { formatDateSafe } from '../../utils/dateUtils'
 
+/**
+ * Modal de justificación de asistencia.
+ * Soporta dos modos:
+ *   - 'tardanza': justifica una tardanza (late_justified / late_justification)
+ *   - 'falta'   : justifica una inasistencia (absence_justified / absence_justification)
+ * Permite registrar un comentario y, si ya estaba justificada, ver/editar
+ * el comentario o quitar la justificación.
+ */
 const JustifyModal = ({
   showJustifyModal,
   selectedRecord,
+  justifyMode = 'tardanza',
   justification,
   setJustification,
   setShowJustifyModal,
-  handleJustifyTardanza,
+  handleJustify,
+  handleRemoveJustification,
   saving
 }) => {
+  const isFalta = justifyMode === 'falta'
+  const entidad = isFalta ? 'Falta' : 'Tardanza'
+  const entidadLower = isFalta ? 'inasistencia' : 'tardanza'
+  const yaJustificada = isFalta
+    ? selectedRecord?.faltaJustificada
+    : selectedRecord?.tardanzaJustificada
+  const comentarioExistente = isFalta
+    ? selectedRecord?.justificacionFalta
+    : selectedRecord?.justificacionTardanza
+
   return (
     <AnimatePresence>
       {showJustifyModal && selectedRecord && (
@@ -31,7 +52,7 @@ const JustifyModal = ({
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedRecord.tardanzaJustificada ? 'Justificación de Tardanza' : 'Justificar Tardanza'}
+                  {yaJustificada ? `Justificación de ${entidad}` : `Justificar ${entidad}`}
                 </h3>
                 <button
                   onClick={() => setShowJustifyModal(false)}
@@ -41,18 +62,36 @@ const JustifyModal = ({
                 </button>
               </div>
 
-              {selectedRecord.tardanzaJustificada ? (
+              {yaJustificada ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-sm font-medium text-green-900 mb-2">
-                      Esta tardanza ya ha sido justificada
+                      Esta {entidadLower} ya ha sido justificada
                     </p>
-                    <p className="text-sm text-gray-700">
-                      {selectedRecord.justificacionTardanza}
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {comentarioExistente || 'Sin comentario'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Justificada el {new Date(selectedRecord.fechaJustificacion).toLocaleDateString('es-PE')}
-                    </p>
+                    {selectedRecord.fechaJustificacion && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Justificada el {formatDateSafe(selectedRecord.fechaJustificacion)}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setShowJustifyModal(false)}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                    >
+                      Cerrar
+                    </button>
+                    <button
+                      onClick={handleRemoveJustification}
+                      disabled={saving}
+                      className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saving ? 'Guardando...' : 'Quitar justificación'}
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -66,7 +105,7 @@ const JustifyModal = ({
                       onChange={(e) => setJustification(e.target.value)}
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Ingrese el motivo de la tardanza..."
+                      placeholder={`Ingrese el motivo de la ${entidadLower}...`}
                     />
                   </div>
 
@@ -78,7 +117,7 @@ const JustifyModal = ({
                       Cancelar
                     </button>
                     <button
-                      onClick={handleJustifyTardanza}
+                      onClick={handleJustify}
                       disabled={saving || !justification.trim()}
                       className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >

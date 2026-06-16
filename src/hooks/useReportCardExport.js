@@ -1,5 +1,6 @@
 import { exportChildBoletaToExcel, exportToPDF } from '@/utils/reportCards'
 import { downloadFinalReportCard } from '@/components/parent/FinalReportCardPDF'
+import { getGradingScalesStore } from '@/stores/gradingScalesStore'
 
 /**
  * Hook personalizado para manejar exportaciones de boletas
@@ -42,10 +43,14 @@ export const useReportCardExport = (selectedChild, selectedYear, selectedBimestr
   const exportFinalReportCard = async () => {
     if (!boletaData || !selectedChild) return
 
-    // Incluir datos de conducta en el estudiante
+    // Incluir datos de conducta y escala de calificación del nivel
+    const gradingScalesStore = getGradingScalesStore()
+    const gradingScale = gradingScalesStore.getScaleForLevel(selectedChild.level_id)
+
     const studentWithBehaviors = {
       ...selectedChild,
-      studentBehaviors: behaviorData?.studentBehaviors || []
+      studentBehaviors: behaviorData?.studentBehaviors || [],
+      gradingScale
     }
 
     await downloadFinalReportCard(studentWithBehaviors, boletaData, selectedYear)

@@ -93,12 +93,12 @@ export const useCourseManagement = (selectedAcademicYear, userId, loadAcademicDa
       const horasSemanales = course.weekly_hours || course.horas_semanales || course.horasSemanales
 
       setCourseForm({
-        name: course.name || course.name || '',
-        code: course.code || course.code || '',
+        name: course.name || '',
+        code: course.code || '',
         nivel: level_id || '',
-        area: course.area || '',
+        area: course.academic_area_id || course.area || '',
         horasSemanales: horasSemanales || 4,
-        description: course.description || course.description || '',
+        description: course.description || '',
         objectives: course.objectives || '',
         methodology: course.methodology || '',
         resources: course.resources || '',
@@ -110,12 +110,12 @@ export const useCourseManagement = (selectedAcademicYear, userId, loadAcademicDa
       console.error('Error loading course assignments:', error)
       // Continuar sin asignaciones si hay error
       setCourseForm({
-        name: course.name || course.name || '',
-        code: course.code || course.code || '',
-        nivel: course.level_id || course.level_id || '',
-        area: course.area || '',
+        name: course.name || '',
+        code: course.code || '',
+        nivel: course.level_id || '',
+        area: course.academic_area_id || course.area || '',
         horasSemanales: course.weekly_hours || course.horas_semanales || course.horasSemanales || 4,
-        description: course.description || course.description || '',
+        description: course.description || '',
         objectives: course.objectives || '',
         methodology: course.methodology || '',
         resources: course.resources || '',

@@ -9,6 +9,7 @@ import {
   formatDate, isPDF, handleDownload, formatFileSize
 } from '../../utils/communicationsHelpers'
 import { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from '../../config/communicationsConstants'
+import { parseDateOnly } from '../../utils/dateUtils'
 
 /**
  * Modal de detalle de comunicado
@@ -211,33 +212,30 @@ const CommunicationDetailModal = ({ isOpen, communication, onClose }) => {
           )}
 
           {/* Fecha de vencimiento */}
-          {communication.due_date && (
-            <div className={`mt-4 p-3 rounded-lg ${
-              new Date(communication.due_date) < new Date()
-                ? 'bg-red-50 border border-red-200'
-                : 'bg-orange-50 border border-orange-200'
-            }`}>
-              <div className="flex items-center gap-2">
-                <AlertCircle className={`w-5 h-5 ${
-                  new Date(communication.due_date) < new Date()
-                    ? 'text-red-600'
-                    : 'text-orange-600'
-                }`} />
-                <span className={`text-sm font-medium ${
-                  new Date(communication.due_date) < new Date()
-                    ? 'text-red-900'
-                    : 'text-orange-900'
-                }`}>
-                  {new Date(communication.due_date) < new Date() ? 'Vencido:' : 'Vence:'} {' '}
-                  {new Date(communication.due_date).toLocaleDateString('es-PE', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </span>
+          {communication.due_date && (() => {
+            const dueDate = parseDateOnly(communication.due_date)
+            const todayMs = new Date().setHours(0, 0, 0, 0)
+            const isVencido = dueDate && dueDate.getTime() < todayMs
+            return (
+              <div className={`mt-4 p-3 rounded-lg ${
+                isVencido
+                  ? 'bg-red-50 border border-red-200'
+                  : 'bg-orange-50 border border-orange-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className={`w-5 h-5 ${
+                    isVencido ? 'text-red-600' : 'text-orange-600'
+                  }`} />
+                  <span className={`text-sm font-medium ${
+                    isVencido ? 'text-red-900' : 'text-orange-900'
+                  }`}>
+                    {isVencido ? 'Vencido:' : 'Vence:'} {' '}
+                    {dueDate ? dueDate.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
       </motion.div>
     </div>

@@ -97,6 +97,22 @@ export const attendanceService = {
   },
 
   /**
+   * Registro/edición MANUAL de asistencia del día (panel del docente).
+   * @param {Object} data - { student_id, date, status, quarter }
+   *        status: 'asistio' | 'tardanza' | 'falta' | 'blanco'
+   * @returns {Promise<Object>} Registro creado o actualizado
+   */
+  async registerManual(data) {
+    try {
+      const response = await post('/attendance-records/manual', data)
+      return response.data || response
+    } catch (error) {
+      console.error('Error al registrar asistencia manual:', error)
+      throw error
+    }
+  },
+
+  /**
    * Crear registro de asistencia
    * @param {Object} recordData - Datos del registro
    * @returns {Promise<Object>} Registro creado

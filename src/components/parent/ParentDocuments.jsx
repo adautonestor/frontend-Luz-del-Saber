@@ -4,6 +4,7 @@ import {
   FileText, Eye, Download, X, Search, File, AlertCircle
 } from 'lucide-react'
 import { documentsService } from '../../services/documentsService'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 const ParentDocuments = () => {
   const [documents, setDocuments] = useState([])
@@ -222,7 +223,7 @@ const ParentDocuments = () => {
                       <div className="flex justify-between">
                         <span>Publicado:</span>
                         <span className="font-medium">
-                          {new Date(document.uploadDate).toLocaleDateString('es-PE')}
+                          {formatDateSafe(document.uploadDate)}
                         </span>
                       </div>
                     </div>
@@ -323,7 +324,7 @@ const ParentDocuments = () => {
             <div className="p-6 border-t border-gray-200 bg-gray-50">
               <div className="flex justify-between">
                 <div className="text-sm text-gray-500">
-                  Publicado el {new Date(selectedDocument.uploadDate).toLocaleDateString('es-PE')}
+                  Publicado el {formatDateSafe(selectedDocument.uploadDate)}
                 </div>
                 <div className="flex gap-3">
                   <button

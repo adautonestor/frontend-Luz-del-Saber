@@ -21,6 +21,7 @@ import {
   isDuplicateOperationNumber,
   calculatePaymentStats
 } from '../utils/payments/paymentProcessor.jsx'
+import { parseDateOnly } from '../utils/dateUtils'
 
 /**
  * Payments Store - Gestión de Pagos
@@ -566,7 +567,7 @@ export const usePaymentsStore = create((set, get) => ({
                      obl.status === 'partial' ? 'parcial' :
                      obl.status === 'en_verificacion' ? 'en_verificacion' :
                      obl.status === 'exonerado' ? 'exonerado' :
-                     new Date(obl.due_date) < new Date() ? 'vencido' : 'pendiente',
+                     ((parseDateOnly(obl.due_date)?.getTime() || 0) < new Date().setHours(0,0,0,0) ? 'vencido' : 'pendiente'),
               amount: obl.total_amount,
               saldo: obl.pending_balance,
               // Para pagos únicos (due_month = null), mostrar "Pago único" o la fecha

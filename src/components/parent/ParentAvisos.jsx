@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Megaphone, Calendar, Clock, Link as LinkIcon, Image as ImageIcon, File, Eye, X, Download, ZoomIn, ZoomOut } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { avisosService } from '../../services/avisosService'
+import { formatDateSafe } from '../../utils/dateUtils'
 const ParentAvisos = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [avisos, setAvisos] = useState([])
@@ -159,7 +160,7 @@ const ParentAvisos = () => {
               <div className="flex items-center justify-between text-xs text-gray-500 border-t pt-3">
                 <span className="flex items-center gap-1">
                   <Calendar size={12} />
-                  {new Date(aviso.fechaCreacion).toLocaleDateString('es-PE')}
+                  {formatDateSafe(aviso.fechaCreacion)}
                 </span>
                 <button
                   onClick={(e) => {
@@ -199,9 +200,10 @@ const ParentAvisos = () => {
                     </h3>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                       <Calendar size={14} />
-                      {new Date(selectedAviso.fechaCreacion).toLocaleDateString('es-PE')}
+                      {formatDateSafe(selectedAviso.fechaCreacion)}
                       <Clock size={14} className="ml-2" />
                       {new Date(selectedAviso.fechaCreacion).toLocaleTimeString('es-PE', {
+                        timeZone: 'America/Lima',
                         hour: '2-digit',
                         minute: '2-digit'
                       })}

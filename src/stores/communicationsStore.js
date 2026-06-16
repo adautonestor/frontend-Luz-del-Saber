@@ -246,6 +246,14 @@ export const useCommunicationsStore = create((set, get) => ({
   getUserCommunications: (userId, userRole = null) => {
     const { communications, readConfirmations } = get()
 
+    // Set de communication_ids donde este usuario tiene un read_confirmation
+    // (el backend crea uno por cada destinatario al enviar el comunicado).
+    const userConfirmedCommIds = new Set(
+      readConfirmations
+        .filter(c => c.user_id === userId || c.user_id === Number(userId) || c.user_id === String(userId))
+        .map(c => c.communication_id)
+    )
+
     // Filtrar comunicaciones según destinatarios y estado
     const filteredComms = communications.filter(comm => {
       const dest = comm.destinatarios || {}
@@ -291,6 +299,13 @@ export const useCommunicationsStore = create((set, get) => ({
       // Si es "especifico", verificar si el ID del usuario está en valores
       if (destType === 'especifico') {
         return destValores.includes(userId) || destValores.includes(String(userId)) || destValores.includes(Number(userId))
+      }
+
+      // Si es "estudiantes" (envío a padres de estudiantes específicos),
+      // los valores son student_ids; el backend ya creó un read_confirmation
+      // para cada padre asociado, así que filtramos por eso.
+      if (destType === 'estudiantes') {
+        return userConfirmedCommIds.has(comm.id)
       }
 
       // Por defecto, mostrar si no hay filtro específico

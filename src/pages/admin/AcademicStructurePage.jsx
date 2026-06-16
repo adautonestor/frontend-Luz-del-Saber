@@ -244,14 +244,14 @@ const AcademicStructurePage = () => {
               name: item.name,
               code: item.code || '',
               description: item.description || '',
-              nivel: item.level_id || '', // Cambiado a nivel
-              area: item.area || '',
+              nivel: item.level_id || '',
+              area: item.academic_area_id || item.area || '',
               horasSemanales: item.weekly_hours || item.horasSemanales || 4,
               objectives: item.objectives || '',
               methodology: item.methodology || '',
               resources: item.resources || '',
               evaluation: item.evaluation || '',
-              profesoresPorGrado: profesoresPorGrado // Cargado desde course_assignments
+              profesoresPorGrado: profesoresPorGrado
             })
           } catch (error) {
             console.error('Error cargando asignaciones:', error)
@@ -261,7 +261,7 @@ const AcademicStructurePage = () => {
               code: item.code || '',
               description: item.description || '',
               nivel: item.level_id || '',
-              area: item.area || '',
+              area: item.academic_area_id || item.area || '',
               horasSemanales: item.weekly_hours || item.horasSemanales || 4,
               objectives: item.objectives || '',
               methodology: item.methodology || '',

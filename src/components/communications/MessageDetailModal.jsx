@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import {
   Paperclip, Image, File, CheckCircle, Eye, Mail
 } from 'lucide-react'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 /**
  * Modal de detalle de comunicación/mensaje
@@ -133,7 +134,7 @@ const MessageDetailModal = ({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Fecha de vencimiento:</span>
                 <span className="font-medium text-orange-600">
-                  {new Date(selectedMessage.due_date).toLocaleDateString('es-PE')}
+                  {formatDateSafe(selectedMessage.due_date)}
                 </span>
               </div>
             )}

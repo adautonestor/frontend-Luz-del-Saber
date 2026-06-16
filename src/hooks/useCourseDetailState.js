@@ -196,16 +196,10 @@ export const useCourseDetailState = (course) => {
     if (value === null || value === undefined) return '--'
 
     const store = getGradingScalesStore()
-    // Usar levelId del curso para obtener configuración correcta
     const levelId = course?.level_id || null
 
-    // Si es sistema literal, usar store centralizado con levelId
-    if (avgData.grading_system === 'literal') {
-      return store.convertNumericToLetter(value, levelId)
-    }
-
-    // Si es numérico, mostrar el número con 1 decimal
-    return typeof value === 'number' ? value.toFixed(1) : value
+    // Usar formatGrade del store que maneja correctamente ambos sistemas
+    return store.formatGrade(value, avgData.grading_system, levelId)
   }, [course?.level_id])
 
   const filteredStudents = studentsList.filter(student =>

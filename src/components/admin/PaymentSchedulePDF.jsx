@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, pdf } from '@react-pdf/renderer'
+import { parseDateOnly } from '../../utils/dateUtils'
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -165,10 +166,10 @@ export const PaymentSchedulePDF = ({ studentData, paymentSchedule, academicYear 
 
     // Verificar si está vencido por la fecha
     if (payment.due_date) {
-      const dueDate = new Date(payment.due_date)
+      const dueDate = parseDateOnly(payment.due_date)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
-      if (dueDate < today) return 'Vencido'
+      if (dueDate && dueDate.getTime() < today.getTime()) return 'Vencido'
     }
 
     return 'Pendiente'

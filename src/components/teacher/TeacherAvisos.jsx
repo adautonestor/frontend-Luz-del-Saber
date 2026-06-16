@@ -7,6 +7,7 @@ import {
 import { useAuthStore } from '../../stores/authStore'
 import { avisosService } from '../../services/avisosService'
 import { communicationsService } from '../../services/communicationsService'
+import { formatDateSafe } from '../../utils/dateUtils'
 
 const TeacherAvisos = () => {
   const { user } = useAuthStore()
@@ -281,7 +282,7 @@ const TeacherAvisos = () => {
               <div className="flex items-center justify-between text-xs text-gray-500 border-t pt-3">
                 <span className="flex items-center gap-1">
                   <Calendar size={12} />
-                  {new Date(aviso.fechaCreacion).toLocaleDateString('es-PE')}
+                  {formatDateSafe(aviso.fechaCreacion)}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -335,9 +336,10 @@ const TeacherAvisos = () => {
                     </h3>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                       <Calendar size={14} />
-                      {new Date(selectedAviso.fechaCreacion).toLocaleDateString('es-PE')}
+                      {formatDateSafe(selectedAviso.fechaCreacion)}
                       <Clock size={14} className="ml-2" />
                       {new Date(selectedAviso.fechaCreacion).toLocaleTimeString('es-PE', {
+                        timeZone: 'America/Lima',
                         hour: '2-digit',
                         minute: '2-digit'
                       })}

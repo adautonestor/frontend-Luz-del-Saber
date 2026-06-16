@@ -4,20 +4,21 @@ import { motion } from 'framer-motion'
 import {
   Barcode, Camera, CheckCircle, XCircle, Users,
   Clock, Calendar, AlertTriangle, RefreshCw, X, Download, Settings,
-  ScanLine, ClipboardList, Search, Filter, Check
+  ScanLine, ClipboardList, Search, Check
 } from 'lucide-react'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import * as XLSX from 'xlsx'
 import { useAuthStore } from '../../stores/authStore'
 import { useAttendanceStore } from '../../stores/attendanceStore'
 import { attendanceService } from '../../services/attendanceService'
+import studentsService from '../../services/studentsService'
 import { useAcademicStore } from '../../stores/academicStore'
-import { getTodayLima } from '../../utils/dateUtils'
+import { getTodayLima, formatDateSafe } from '../../utils/dateUtils'
 
 const AttendanceScannerPage = () => {
   const { user } = useAuthStore()
   const {
-    scanQRCode,
+    scanDNI,
     loadTodaySummary,
     getTodayAttendance,
     isLoading
@@ -28,13 +29,24 @@ const AttendanceScannerPage = () => {
 
   // Estados para la pestaña de registros por día
   const [recordsDate, setRecordsDate] = useState(getTodayLima())
+  const [recordsQuarter, setRecordsQuarter] = useState(1) // Bimestre para registrar faltas
   const [dayRecords, setDayRecords] = useState([])
   const [loadingRecords, setLoadingRecords] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLevel, setFilterLevel] = useState('')
   const [filterGrade, setFilterGrade] = useState('')
   const [filterSection, setFilterSection] = useState('')
-  const [savingJustification, setSavingJustification] = useState(false)
+
+  // Roster completo (para mostrar estudiantes sin registro y poder marcar faltas)
+  const [includeRoster, setIncludeRoster] = useState(false)
+  const [rosterStudents, setRosterStudents] = useState([])
+  const [loadingRoster, setLoadingRoster] = useState(false)
+  const [savingStudentId, setSavingStudentId] = useState(null)
+
+  // Modal de justificación con comentario (tardanza o falta)
+  const [justifyModal, setJustifyModal] = useState({ open: false, record: null, mode: 'falta' })
+  const [justifyComment, setJustifyComment] = useState('')
+  const [savingJustify, setSavingJustify] = useState(false)
 
   // Store académico para filtros
   const academicStore = useAcademicStore()
@@ -115,29 +127,140 @@ const AttendanceScannerPage = () => {
     return true
   })
 
-  // Toggle justificación de tardanza
-  const handleToggleLateJustified = async (record) => {
+  // ¿Un estudiante del roster pasa los filtros activos?
+  const studentMatchesFilters = (s) => {
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      const name = `${s.paternal_last_name || ''} ${s.maternal_last_name || ''} ${s.first_names || ''} ${s.last_names || ''}`.toLowerCase()
+      const dni = s.dni || ''
+      if (!name.includes(term) && !dni.includes(term)) return false
+    }
+    if (filterLevel && s.level_id !== parseInt(filterLevel)) return false
+    if (filterGrade && s.grade_id !== parseInt(filterGrade)) return false
+    if (filterSection && s.section_id !== parseInt(filterSection)) return false
+    return true
+  }
+
+  // Normaliza los datos del estudiante a partir de un registro de asistencia
+  const studentFromRecord = (r) => ({
+    id: r.student_id,
+    first_names: r.student_first_names,
+    last_names: r.student_last_names,
+    paternal_last_name: r.student_paternal_last_name,
+    maternal_last_name: r.student_maternal_last_name,
+    dni: r.dni,
+    level_name: r.level_name,
+    grade_name: r.grade_name,
+    section_name: r.section_name
+  })
+
+  // Filas a mostrar en la tabla: solo registros, o roster completo (con/sin registro).
+  const displayRows = includeRoster
+    ? rosterStudents
+        .filter(studentMatchesFilters)
+        .map(s => ({ key: `stu-${s.id}`, student: s, record: dayRecords.find(r => r.student_id === s.id) || null }))
+        .sort((a, b) =>
+          `${a.student.paternal_last_name || ''} ${a.student.maternal_last_name || ''} ${a.student.first_names || ''}`
+            .localeCompare(`${b.student.paternal_last_name || ''} ${b.student.maternal_last_name || ''} ${b.student.first_names || ''}`)
+        )
+    : filteredRecords.map(r => ({ key: `rec-${r.id}`, student: studentFromRecord(r), record: r }))
+
+  // Cargar el roster de estudiantes (para mostrar quienes no tienen registro)
+  const loadRoster = async () => {
     try {
-      await attendanceService.updateRecord(record.id, {
-        late_justified: !record.late_justified
-      })
-      loadDayRecords()
+      setLoadingRoster(true)
+      const all = await studentsService.getAll()
+      setRosterStudents(Array.isArray(all) ? all : [])
     } catch (error) {
-      console.error('Error al cambiar justificación de tardanza:', error)
-      alert('Error al cambiar justificación')
+      console.error('Error cargando roster de estudiantes:', error)
+      setRosterStudents([])
+    } finally {
+      setLoadingRoster(false)
     }
   }
 
-  // Toggle justificación de inasistencia
-  const handleToggleAbsenceJustified = async (record) => {
+  // Cargar roster cuando se activa la opción de incluir estudiantes sin registro
+  useEffect(() => {
+    if (activeMainTab === 'records' && includeRoster && rosterStudents.length === 0) {
+      loadRoster()
+    }
+  }, [activeMainTab, includeRoster])
+
+  // Registrar/editar manualmente el estado de asistencia de un estudiante (asistio/tardanza/falta/blanco)
+  const handleRegisterStatus = async (studentId, status) => {
     try {
-      await attendanceService.updateRecord(record.id, {
-        absence_justified: !record.absence_justified
+      setSavingStudentId(studentId)
+      await attendanceService.registerManual({
+        student_id: studentId,
+        date: recordsDate,
+        status,
+        quarter: recordsQuarter
       })
-      loadDayRecords()
+      await loadDayRecords()
     } catch (error) {
-      console.error('Error al cambiar justificación de inasistencia:', error)
-      alert('Error al cambiar justificación')
+      console.error('Error al registrar asistencia:', error)
+      alert('Error al registrar asistencia: ' + (error.message || ''))
+    } finally {
+      setSavingStudentId(null)
+    }
+  }
+
+  // Abrir el modal de justificación (con comentario) para una tardanza o falta
+  const openJustifyModal = (record, mode) => {
+    setJustifyModal({ open: true, record, mode })
+    setJustifyComment(
+      mode === 'falta'
+        ? (record.absence_justification || '')
+        : (record.late_justification || '')
+    )
+  }
+
+  const closeJustifyModal = () => {
+    setJustifyModal({ open: false, record: null, mode: 'falta' })
+    setJustifyComment('')
+  }
+
+  // Guardar la justificación con comentario
+  const handleSaveJustification = async () => {
+    const { record, mode } = justifyModal
+    if (!record) return
+    if (!justifyComment.trim()) {
+      alert('Por favor ingrese un comentario para la justificación')
+      return
+    }
+    try {
+      setSavingJustify(true)
+      const updates = mode === 'falta'
+        ? { absence_justified: true, absence_justification: justifyComment.trim() }
+        : { late_justified: true, late_justification: justifyComment.trim() }
+      await attendanceService.updateRecord(record.id, updates)
+      closeJustifyModal()
+      await loadDayRecords()
+    } catch (error) {
+      console.error('Error al guardar justificación:', error)
+      alert('Error al guardar la justificación: ' + (error.message || ''))
+    } finally {
+      setSavingJustify(false)
+    }
+  }
+
+  // Quitar la justificación
+  const handleRemoveJustification = async () => {
+    const { record, mode } = justifyModal
+    if (!record) return
+    try {
+      setSavingJustify(true)
+      const updates = mode === 'falta'
+        ? { absence_justified: false }
+        : { late_justified: false }
+      await attendanceService.updateRecord(record.id, updates)
+      closeJustifyModal()
+      await loadDayRecords()
+    } catch (error) {
+      console.error('Error al quitar justificación:', error)
+      alert('Error al quitar la justificación: ' + (error.message || ''))
+    } finally {
+      setSavingJustify(false)
     }
   }
 
@@ -253,25 +376,65 @@ const AttendanceScannerPage = () => {
       setTodayStats(stats)
 
       // Cargar registros del día desde la base de datos
+      // Expandir cada registro en eventos individuales (Entrada 1, Salida 1, Entrada 2, Salida 2)
       if (summary && summary.records && summary.records.length > 0) {
-        const todayRecords = summary.records.map(record => ({
-          student: {
-            id: record.student_id,
-            first_names: record.student_first_names || record.first_names,
-            last_names: record.student_last_names || record.last_names,
-            paternal_last_name: record.student_paternal_last_name || record.paternal_last_name,
-            maternal_last_name: record.student_maternal_last_name || record.maternal_last_name,
-            dni: record.dni,
-            level_name: record.level_name,
-            grade_name: record.grade_name,
-            section_name: record.section_name
-          },
-          record: record,
-          type: record.exit_time1 ? 'salida' : 'entrada',
-          eventName: record.exit_time1 ? 'Salida 1' : 'Entrada 1',
-          timestamp: record.exit_time1 || record.entry_time1
-        }))
-        setRecentScans(todayRecords)
+        const studentFromRecord = (record) => ({
+          id: record.student_id,
+          first_names: record.student_first_names || record.first_names,
+          last_names: record.student_last_names || record.last_names,
+          paternal_last_name: record.student_paternal_last_name || record.paternal_last_name,
+          maternal_last_name: record.student_maternal_last_name || record.maternal_last_name,
+          dni: record.dni,
+          level_name: record.level_name,
+          grade_name: record.grade_name,
+          section_name: record.section_name
+        })
+
+        const allEvents = []
+        summary.records.forEach(record => {
+          if (record.entry_time1) {
+            allEvents.push({
+              student: studentFromRecord(record),
+              record,
+              type: 'entrada',
+              eventName: 'Entrada 1',
+              timestamp: record.entry_time1
+            })
+          }
+          if (record.exit_time1) {
+            allEvents.push({
+              student: studentFromRecord(record),
+              record,
+              type: 'salida',
+              eventName: 'Salida 1',
+              timestamp: record.exit_time1
+            })
+          }
+          if (record.entry_time2) {
+            allEvents.push({
+              student: studentFromRecord(record),
+              record,
+              type: 'entrada',
+              eventName: 'Entrada 2',
+              timestamp: record.entry_time2
+            })
+          }
+          if (record.exit_time2) {
+            allEvents.push({
+              student: studentFromRecord(record),
+              record,
+              type: 'salida',
+              eventName: 'Salida 2',
+              timestamp: record.exit_time2
+            })
+          }
+        })
+
+        // Ordenar por timestamp descendente (más recientes primero)
+        allEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        setRecentScans(allEvents)
+      } else {
+        setRecentScans([])
       }
     } catch (error) {
       console.error('Error cargando datos:', error)
@@ -300,7 +463,7 @@ const AttendanceScannerPage = () => {
 
   const handleScan = async (code) => {
     try {
-      const result = await scanQRCode(code, user?.id, scanMode)
+      const result = await scanDNI(code, user?.id, scanMode)
 
       // Determinar el mensaje según el estado
       let message
@@ -327,16 +490,10 @@ const AttendanceScannerPage = () => {
         message
       })
 
-      // Add to recent scans solo si es un nuevo registro
-      if (!result.alreadyRegistered && !isComplete) {
-        setRecentScans(prev => [{
-          ...result,
-          timestamp: new Date().toISOString()
-        }, ...prev.slice(0, 9)])
-      }
-
       setShowResult(true)
-      loadInitialData()
+
+      // Recargar datos del servidor para actualizar estadísticas y registros recientes
+      await loadInitialData()
 
       // Auto-hide result after 3 seconds
       setTimeout(() => {
@@ -384,11 +541,14 @@ const AttendanceScannerPage = () => {
     switch (status) {
       case 'a_tiempo':
       case 'presente':
+      case 'asistio':
         return 'bg-green-100 text-green-800'
       case 'tardanza':
         return 'bg-yellow-100 text-yellow-800'
       case 'falta':
         return 'bg-red-100 text-red-800'
+      case 'blanco':
+        return 'bg-gray-100 text-gray-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -400,10 +560,14 @@ const AttendanceScannerPage = () => {
         return 'A tiempo'
       case 'presente':
         return 'Presente'
+      case 'asistio':
+        return 'Asistió'
       case 'tardanza':
         return 'Tardanza'
       case 'falta':
         return 'Falta'
+      case 'blanco':
+        return 'Blanco'
       default:
         return status || 'Registrado'
     }
@@ -828,7 +992,7 @@ const AttendanceScannerPage = () => {
             <div className="space-y-3 max-h-[500px] overflow-y-auto">
               {recentScans.map((scan, index) => (
                 <motion.div
-                  key={`${scan.student?.id}-${scan.timestamp}`}
+                  key={`${scan.student?.id}-${scan.eventName}-${scan.timestamp}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -853,13 +1017,20 @@ const AttendanceScannerPage = () => {
                       }`}>
                         {scan.type === 'entrada' ? '📥 Entrada' : '📤 Salida'}
                       </span>
-                      {scan.record?.entry_status1 && (
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          getStatusColor(scan.record.entry_status1)
-                        }`}>
-                          {getStatusLabel(scan.record.entry_status1)}
-                        </span>
-                      )}
+                      {(() => {
+                        const statusMap = {
+                          'Entrada 1': scan.record?.entry_status1,
+                          'Salida 1': scan.record?.exit_status1,
+                          'Entrada 2': scan.record?.entry_status2,
+                          'Salida 2': scan.record?.exit_status2
+                        }
+                        const status = statusMap[scan.eventName] || scan.record?.entry_status1
+                        return status ? (
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                            {getStatusLabel(status)}
+                          </span>
+                        ) : null
+                      })()}
                     </div>
                   </div>
                 </motion.div>
@@ -908,6 +1079,21 @@ const AttendanceScannerPage = () => {
                   max={getTodayLima()}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Selector de Bimestre (para registrar faltas) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bimestre</label>
+                <select
+                  value={recordsQuarter}
+                  onChange={(e) => setRecordsQuarter(Number(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value={1}>Bimestre 1</option>
+                  <option value={2}>Bimestre 2</option>
+                  <option value={3}>Bimestre 3</option>
+                  <option value={4}>Bimestre 4</option>
+                </select>
               </div>
 
               {/* Filtro por Nivel */}
@@ -1001,6 +1187,24 @@ const AttendanceScannerPage = () => {
                 </button>
               </div>
             </div>
+
+            {/* Opción para registrar faltas mostrando estudiantes sin registro */}
+            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+              <input
+                id="includeRoster"
+                type="checkbox"
+                checked={includeRoster}
+                onChange={(e) => setIncludeRoster(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="includeRoster" className="text-sm text-gray-700 cursor-pointer select-none">
+                Mostrar estudiantes sin registro para <strong>marcar faltas</strong>
+                {loadingRoster && <span className="ml-2 text-gray-400">(cargando...)</span>}
+              </label>
+              <span className="text-xs text-gray-400 ml-1">
+                (recomendado: filtra por nivel/grado/sección)
+              </span>
+            </div>
           </div>
 
           {/* Estadísticas rápidas */}
@@ -1057,15 +1261,19 @@ const AttendanceScannerPage = () => {
               </h3>
             </div>
 
-            {loadingRecords ? (
+            {(loadingRecords || (includeRoster && loadingRoster)) ? (
               <div className="p-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-gray-500 mt-2">Cargando registros...</p>
+                <p className="text-gray-500 mt-2">Cargando...</p>
               </div>
-            ) : filteredRecords.length === 0 ? (
+            ) : displayRows.length === 0 ? (
               <div className="p-8 text-center">
                 <ClipboardList className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                <p className="text-gray-500">No hay registros de asistencia para esta fecha</p>
+                <p className="text-gray-500">
+                  {includeRoster
+                    ? 'No hay estudiantes que coincidan con los filtros'
+                    : 'No hay registros de asistencia para esta fecha'}
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1077,88 +1285,226 @@ const AttendanceScannerPage = () => {
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Entrada 1</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Salida 1</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Justificación</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones / Justificación</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredRecords.map((record, index) => (
-                      <motion.tr
-                        key={record.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.02 }}
-                        className="hover:bg-gray-50"
-                      >
-                        <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-gray-900">
-                            {`${record.student_paternal_last_name || ''} ${record.student_maternal_last_name || ''}`.trim() || '-'}, {record.student_first_names}{record.student_last_names ? ` ${record.student_last_names}` : ''}
-                          </div>
-                          <div className="text-xs text-gray-500">DNI: {record.dni}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-gray-700">
-                            {record.level_name} - {record.grade_name} "{record.section_name}"
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="text-sm text-gray-900">
-                            {record.entry_time1
-                              ? new Date(record.entry_time1).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
-                              : '-'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(record.entry_status1)}`}>
-                            {getStatusLabel(record.entry_status1)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="text-sm text-gray-900">
-                            {record.exit_time1
-                              ? new Date(record.exit_time1).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
-                              : '-'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-2">
-                            {/* Botón Justificar Tardanza */}
-                            {record.entry_status1 === 'tardanza' && (
-                              <button
-                                onClick={() => handleToggleLateJustified(record)}
-                                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                  record.late_justified
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                    : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                }`}
-                                title={record.late_justified ? 'Tardanza justificada' : 'Justificar tardanza'}
-                              >
-                                {record.late_justified ? '✓ T.Just.' : 'Just. Tard.'}
-                              </button>
-                            )}
+                    {displayRows.map(({ key, student, record }, index) => {
+                      const isPresent = !!(record && record.entry_time1)
+                      const isFalta = record && (record.entry_status1 === 'falta' || (!record.entry_time1 && record.entry_status1 === 'falta'))
+                      const isTardanza = record && record.entry_status1 === 'tardanza'
+                      const canMarkFalta = !isPresent && (!record || record.entry_status1 !== 'falta')
+                      const estadoLabel = record ? getStatusLabel(record.entry_status1) : 'Sin registro'
+                      const estadoColor = record ? getStatusColor(record.entry_status1) : 'bg-gray-100 text-gray-600'
+                      const savingThis = savingStudentId === student.id
 
-                            {/* Botón Justificar Falta (cuando no tiene entrada) */}
-                            {!record.entry_time1 && (
-                              <button
-                                onClick={() => handleToggleAbsenceJustified(record)}
-                                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                  record.absence_justified
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                }`}
-                                title={record.absence_justified ? 'Falta justificada' : 'Justificar falta'}
-                              >
-                                {record.absence_justified ? '✓ F.Just.' : 'Just. Falta'}
-                              </button>
+                      return (
+                        <motion.tr
+                          key={key}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.02 }}
+                          className="hover:bg-gray-50"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="text-sm font-medium text-gray-900">
+                              {`${student.paternal_last_name || ''} ${student.maternal_last_name || ''}`.trim() || '-'}, {student.first_names}{student.last_names ? ` ${student.last_names}` : ''}
+                            </div>
+                            <div className="text-xs text-gray-500">DNI: {student.dni}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-sm text-gray-700">
+                              {(record?.level_name || student.level_name || '-')} - {(record?.grade_name || student.grade_name || '')} {(record?.section_name || student.section_name) ? `"${record?.section_name || student.section_name}"` : ''}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="text-sm text-gray-900">
+                              {record?.entry_time1
+                                ? new Date(record.entry_time1).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+                                : '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${estadoColor}`}>
+                              {estadoLabel}
+                            </span>
+                            {isFalta && record.absence_justified && (
+                              <span className="ml-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800" title={record.absence_justification || ''}>
+                                Justificada
+                              </span>
                             )}
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="text-sm text-gray-900">
+                              {record?.exit_time1
+                                ? new Date(record.exit_time1).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+                                : '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-2 flex-wrap">
+                              {/* Marcar Falta */}
+                              {canMarkFalta && (
+                                <button
+                                  onClick={() => handleRegisterStatus(student.id, 'falta')}
+                                  disabled={savingThis}
+                                  className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 transition-colors disabled:opacity-50"
+                                  title="Marcar como falta (inasistencia)"
+                                >
+                                  <XCircle size={14} className="inline mr-1" />
+                                  {savingThis ? '...' : 'Marcar Falta'}
+                                </button>
+                              )}
+
+                              {/* Justificar Tardanza (con comentario) */}
+                              {isTardanza && (
+                                <button
+                                  onClick={() => openJustifyModal(record, 'tardanza')}
+                                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                                    record.late_justified
+                                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                      : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                  }`}
+                                  title={record.late_justified ? 'Tardanza justificada (ver/editar)' : 'Justificar tardanza'}
+                                >
+                                  {record.late_justified ? '✓ T.Just.' : 'Just. Tard.'}
+                                </button>
+                              )}
+
+                              {/* Justificar Falta (con comentario) */}
+                              {isFalta && (
+                                <>
+                                  <button
+                                    onClick={() => openJustifyModal(record, 'falta')}
+                                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                                      record.absence_justified
+                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                        : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                    }`}
+                                    title={record.absence_justified ? 'Falta justificada (ver/editar)' : 'Justificar falta con comentario'}
+                                  >
+                                    {record.absence_justified ? '✓ F.Just.' : 'Just. Falta'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleRegisterStatus(student.id, 'asistio')}
+                                    disabled={savingThis}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                                    title="Corregir: marcar como asistió"
+                                  >
+                                    ↺ Asistió
+                                  </button>
+                                </>
+                              )}
+
+                              {!canMarkFalta && !isTardanza && !isFalta && (
+                                <span className="text-xs text-gray-400">—</span>
+                              )}
+                            </div>
+                          </td>
+                        </motion.tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ==================== MODAL: JUSTIFICACIÓN CON COMENTARIO ==================== */}
+      {justifyModal.open && justifyModal.record && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+          onClick={closeJustifyModal}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const isFaltaMode = justifyModal.mode === 'falta'
+              const yaJustificada = isFaltaMode
+                ? justifyModal.record.absence_justified
+                : justifyModal.record.late_justified
+              const comentario = isFaltaMode
+                ? justifyModal.record.absence_justification
+                : justifyModal.record.late_justification
+              const entidad = isFaltaMode ? 'Falta' : 'Tardanza'
+              const entidadLower = isFaltaMode ? 'inasistencia' : 'tardanza'
+              return (
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {yaJustificada ? `Justificación de ${entidad}` : `Justificar ${entidad}`}
+                    </h3>
+                    <button onClick={closeJustifyModal} className="text-gray-400 hover:text-gray-600">
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {yaJustificada ? (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm font-medium text-green-900 mb-2">
+                          Esta {entidadLower} ya ha sido justificada
+                        </p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {comentario || 'Sin comentario'}
+                        </p>
+                        {justifyModal.record.justification_date && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            Justificada el {formatDateSafe(justifyModal.record.justification_date)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={closeJustifyModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                          Cerrar
+                        </button>
+                        <button
+                          onClick={handleRemoveJustification}
+                          disabled={savingJustify}
+                          className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {savingJustify ? 'Guardando...' : 'Quitar justificación'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Motivo / comentario de la justificación
+                        </label>
+                        <textarea
+                          value={justifyComment}
+                          onChange={(e) => setJustifyComment(e.target.value)}
+                          rows={4}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={`Ingrese el motivo de la ${entidadLower}...`}
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={closeJustifyModal} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={handleSaveJustification}
+                          disabled={savingJustify || !justifyComment.trim()}
+                          className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {savingJustify ? 'Guardando...' : 'Guardar Justificación'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+          </motion.div>
         </div>
       )}
     </div>

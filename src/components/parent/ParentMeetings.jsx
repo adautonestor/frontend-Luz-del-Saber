@@ -9,6 +9,7 @@ import { getMeetingsForParent, getAttendanceSummaryForParent } from '../../servi
 import parentMeetingsService from '../../services/parentMeetingsService'
 import meetingAttendancesService from '../../services/meetingAttendancesService'
 import structureService from '../../services/academic/structureService'
+import { parseDateOnly } from '../../utils/dateUtils'
 
 const ParentMeetings = () => {
   const { user } = useAuthStore()
@@ -39,7 +40,7 @@ const ParentMeetings = () => {
 
       // Sort by date (most recent first)
       const sortedMeetings = parentMeetings.sort((a, b) => {
-        return new Date(b.fecha) - new Date(a.fecha)
+        return (parseDateOnly(b.fecha)?.getTime() || 0) - (parseDateOnly(a.fecha)?.getTime() || 0)
       })
 
       setMeetings(sortedMeetings)
@@ -61,7 +62,8 @@ const ParentMeetings = () => {
 
   const getMeetingStatus = (meeting) => {
     const today = new Date()
-    const meetingDate = new Date(meeting.fecha)
+    today.setHours(0, 0, 0, 0)
+    const meetingDate = parseDateOnly(meeting.fecha)
 
     if (meeting.state === 'cancelada') {
       return {
@@ -79,7 +81,7 @@ const ParentMeetings = () => {
       }
     }
 
-    if (meetingDate < today) {
+    if (meetingDate && meetingDate.getTime() < today.getTime()) {
       return {
         label: 'Pendiente de registro',
         color: 'bg-yellow-100 text-yellow-800',
@@ -121,14 +123,15 @@ const ParentMeetings = () => {
 
   // Separate meetings into upcoming and past
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const upcomingMeetings = meetings.filter(m => {
-    const meetingDate = new Date(m.fecha)
-    return meetingDate >= today && m.state !== 'cancelada' && m.state !== 'realizada'
+    const meetingDate = parseDateOnly(m.fecha)
+    return meetingDate && meetingDate.getTime() >= today.getTime() && m.state !== 'cancelada' && m.state !== 'realizada'
   })
 
   const pastMeetings = meetings.filter(m => {
-    const meetingDate = new Date(m.fecha)
-    return meetingDate < today || m.state === 'realizada' || m.state === 'cancelada'
+    const meetingDate = parseDateOnly(m.fecha)
+    return (meetingDate && meetingDate.getTime() < today.getTime()) || m.state === 'realizada' || m.state === 'cancelada'
   })
 
   return (
