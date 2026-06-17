@@ -20,6 +20,8 @@ import StudentsTab from '../../components/enrollment/StudentsTab'
 import CreateStudentModal from '../../components/enrollment/CreateStudentModal'
 import EditStudentModal from '../../components/enrollment/EditStudentModal'
 import EditPaymentScheduleModal from '../../components/enrollment/EditPaymentScheduleModal'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import RejectRequestModal from '../../components/enrollment/modals/RejectRequestModal'
 import ViewStudentModal from '../../components/enrollment/modals/ViewStudentModal'
 import ExportModal from '../../components/enrollment/modals/ExportModal'
@@ -154,6 +156,9 @@ const EnrollmentPage = () => {
   const filteredStudents = enrichStudentsWithNames(rawStudents)
   const enrollmentStats = getEnrollmentStats()
   const academicTree = getAcademicTree()
+
+  // Paginación de la tabla de estudiantes
+  const studentsPagination = usePagination(filteredStudents, 10, JSON.stringify(filters))
 
   const handleSearch = (value) => {
     updateFilters({ search: value })
@@ -561,7 +566,7 @@ const EnrollmentPage = () => {
 
       {/* Contenido principal - Solo estudiantes */}
       <StudentsTab
-        students={filteredStudents}
+        students={studentsPagination.pageItems}
         filters={filters}
         onSearch={handleSearch}
         onFilterChange={handleFilterChange}
@@ -581,6 +586,19 @@ const EnrollmentPage = () => {
         setShowContractModal={setShowContractModal}
         setViewingStudent={setViewingStudent}
         setShowViewModal={setShowViewModal}
+      />
+
+      <Pagination
+        page={studentsPagination.page}
+        totalPages={studentsPagination.totalPages}
+        total={studentsPagination.total}
+        from={studentsPagination.from}
+        to={studentsPagination.to}
+        pageSize={studentsPagination.pageSize}
+        onPageChange={studentsPagination.setPage}
+        onPrev={studentsPagination.prev}
+        onNext={studentsPagination.next}
+        onPageSizeChange={studentsPagination.setPageSize}
       />
 
 

@@ -19,6 +19,8 @@ import {
   MessageComposerModal,
   MessageDetailModal
 } from '@/components/teacherCommunications'
+import Pagination from '@/components/common/Pagination'
+import { usePagination } from '@/hooks/usePagination'
 
 const CommunicationsPage = () => {
   const { user } = useAuthStore()
@@ -79,6 +81,13 @@ const CommunicationsPage = () => {
     searchTerm,
     filterType,
     activeTab
+  )
+
+  // Paginación de la lista de comunicaciones
+  const communicationsPagination = usePagination(
+    filteredCommunications,
+    10,
+    JSON.stringify({ searchTerm, filterType, activeTab })
   )
 
   // Handlers
@@ -244,9 +253,21 @@ const CommunicationsPage = () => {
       {/* Lista de Comunicaciones */}
       <div className="card">
         <CommunicationsList
-          communications={filteredCommunications}
+          communications={communicationsPagination.pageItems}
           onViewMessage={viewMessage}
           isOwnCommunication={isOwnCommunication}
+        />
+        <Pagination
+          page={communicationsPagination.page}
+          totalPages={communicationsPagination.totalPages}
+          total={communicationsPagination.total}
+          from={communicationsPagination.from}
+          to={communicationsPagination.to}
+          pageSize={communicationsPagination.pageSize}
+          onPageChange={communicationsPagination.setPage}
+          onPrev={communicationsPagination.prev}
+          onNext={communicationsPagination.next}
+          onPageSizeChange={communicationsPagination.setPageSize}
         />
       </div>
 

@@ -9,6 +9,8 @@ import { useAuthStore } from '../../stores/authStore'
 import { studentsService } from '../../services/studentsService'
 import { attendanceService } from '../../services/attendanceService'
 import { parseDateOnly, formatDateSafe, formatTime } from '../../utils/dateUtils'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const ParentAttendance = () => {
   const { user } = useAuthStore()
@@ -140,6 +142,9 @@ const ParentAttendance = () => {
   }
 
   const monthlyStats = getMonthlyStats()
+
+  // Paginación del historial de asistencia
+  const pg = usePagination(attendanceRecords, 10, `${selectedChild}:${selectedMonth}:${selectedYear}`)
 
   return (
     <div className="space-y-6">
@@ -370,7 +375,7 @@ const ParentAttendance = () => {
                       </td>
                     </tr>
                   ) : (
-                    attendanceRecords.map((record, index) => (
+                    pg.pageItems.map((record, index) => (
                       <motion.tr
                         key={record.id}
                         initial={{ opacity: 0, y: 10 }}
@@ -433,6 +438,21 @@ const ParentAttendance = () => {
                 </tbody>
               </table>
             </div>
+
+            {!isLoading && attendanceRecords.length > 0 && (
+              <Pagination
+                page={pg.page}
+                totalPages={pg.totalPages}
+                total={pg.total}
+                from={pg.from}
+                to={pg.to}
+                pageSize={pg.pageSize}
+                onPageChange={pg.setPage}
+                onPrev={pg.prev}
+                onNext={pg.next}
+                onPageSizeChange={pg.setPageSize}
+              />
+            )}
           </div>
         </>
       )}

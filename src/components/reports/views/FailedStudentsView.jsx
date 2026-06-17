@@ -1,5 +1,7 @@
 import React from 'react'
 import { TrendingUp, Users, Activity } from 'lucide-react'
+import Pagination from '../../common/Pagination'
+import { usePagination } from '../../../hooks/usePagination'
 
 /**
  * Vista de reporte de estudiantes desaprobados
@@ -12,6 +14,18 @@ const FailedStudentsView = ({
   setSelectedStudentCourses,
   setShowCoursesModal
 }) => {
+  // Lista ya filtrada de estudiantes (según los filtros activos)
+  const filteredStudents = (reportData.data || []).filter(student => {
+    if (failedStudentsFilters.nivel !== 'todos' && student.level !== failedStudentsFilters.nivel) return false
+    if (failedStudentsFilters.grado !== 'todos' && student.grade !== failedStudentsFilters.grado) return false
+    if (failedStudentsFilters.seccion !== 'todos' && student.section !== failedStudentsFilters.seccion) return false
+    if (student.failedSubjectsCount < failedStudentsFilters.minCursosDesaprobados) return false
+    return true
+  })
+
+  // Paginación del lado del cliente sobre la lista ya filtrada
+  const pg = usePagination(filteredStudents, 10, JSON.stringify(failedStudentsFilters))
+
   return (
     <div className="space-y-6">
       {/* Estadísticas generales */}
@@ -155,13 +169,7 @@ const FailedStudentsView = ({
         <div className="mb-3 flex justify-between items-center">
           <p className="text-sm text-gray-600">
             Mostrando <span className="font-semibold">
-              {reportData.data.filter(student => {
-                if (failedStudentsFilters.nivel !== 'todos' && student.level !== failedStudentsFilters.nivel) return false
-                if (failedStudentsFilters.grado !== 'todos' && student.grade !== failedStudentsFilters.grado) return false
-                if (failedStudentsFilters.seccion !== 'todos' && student.section !== failedStudentsFilters.seccion) return false
-                if (student.failedSubjectsCount < failedStudentsFilters.minCursosDesaprobados) return false
-                return true
-              }).length}
+              {filteredStudents.length}
             </span> de <span className="font-semibold">{reportData.data.length}</span> estudiantes
           </p>
         </div>
@@ -176,27 +184,7 @@ const FailedStudentsView = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {reportData.data
-              .filter(student => {
-                // Filtrar por nivel
-                if (failedStudentsFilters.nivel !== 'todos' && student.level !== failedStudentsFilters.nivel) {
-                  return false
-                }
-                // Filtrar por grado
-                if (failedStudentsFilters.grado !== 'todos' && student.grade !== failedStudentsFilters.grado) {
-                  return false
-                }
-                // Filtrar por sección
-                if (failedStudentsFilters.seccion !== 'todos' && student.section !== failedStudentsFilters.seccion) {
-                  return false
-                }
-                // Filtrar por mínimo de cursos desaprobados
-                if (student.failedSubjectsCount < failedStudentsFilters.minCursosDesaprobados) {
-                  return false
-                }
-                return true
-              })
-              .map((student, index) => (
+            {pg.pageItems.map((student, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="px-6 py-2 whitespace-nowrap">
                   <div className="font-medium text-gray-900">{student.studentName}</div>
@@ -260,6 +248,18 @@ const FailedStudentsView = ({
             ))}
           </tbody>
         </table>
+        <Pagination
+          page={pg.page}
+          totalPages={pg.totalPages}
+          total={pg.total}
+          from={pg.from}
+          to={pg.to}
+          pageSize={pg.pageSize}
+          onPageChange={pg.setPage}
+          onPrev={pg.prev}
+          onNext={pg.next}
+          onPageSizeChange={pg.setPageSize}
+        />
       </div>
     </div>
   )

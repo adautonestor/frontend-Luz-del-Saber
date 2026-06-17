@@ -9,11 +9,20 @@ import UserFormModal from '../../components/admin/UserFormModal'
 import ImportUsersModal from '../../components/admin/ImportUsersModal'
 import AlertModal from '../../components/common/AlertModal'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const UsersPage = () => {
   // Custom hooks
   const state = useUsersPageState()
   const importState = useUsersImport(state.loadUsers)
+
+  // Paginación de usuarios (cliente)
+  const usersPagination = usePagination(
+    state.filteredUsers,
+    10,
+    JSON.stringify({ search: state.searchTerm, role: state.roleFilter, status: state.statusFilter })
+  )
 
   if (state.loading) {
     return (
@@ -74,12 +83,24 @@ const UsersPage = () => {
 
       {/* Users Table */}
       <UsersTable
-        users={state.filteredUsers}
+        users={usersPagination.pageItems}
         onEdit={state.handleEdit}
         onDelete={state.handleDelete}
         getRoleBadgeColor={state.getRoleBadgeColor}
         getStatusBadgeColor={state.getStatusBadgeColor}
         currentUser={state.currentUser}
+      />
+      <Pagination
+        page={usersPagination.page}
+        totalPages={usersPagination.totalPages}
+        total={usersPagination.total}
+        from={usersPagination.from}
+        to={usersPagination.to}
+        pageSize={usersPagination.pageSize}
+        onPageChange={usersPagination.setPage}
+        onPrev={usersPagination.prev}
+        onNext={usersPagination.next}
+        onPageSizeChange={usersPagination.setPageSize}
       />
 
       {/* User Form Modal */}

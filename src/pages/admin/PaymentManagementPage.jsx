@@ -10,6 +10,8 @@ import ManualPaymentModal from '../../components/admin/ManualPaymentModal'
 import studentsService from '../../services/studentsService'
 import { calculateMora, calculateDaysLate } from '../../utils/payments/moraCalculator.jsx'
 import { parseDateOnly, formatDateSafe } from '../../utils/dateUtils'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const PaymentManagementPage = () => {
   const [activeTab, setActiveTab] = useState('obligations')
@@ -93,6 +95,13 @@ const PaymentManagementPage = () => {
 
     return matchesSearch && matchesStatus && matchesLevel
   })
+
+  // Paginación de la tabla de obligaciones
+  const obligationsPagination = usePagination(
+    filteredObligations,
+    10,
+    JSON.stringify({ searchTerm, filterStatus, filterLevel })
+  )
 
   // Manejar registro de pago manual
   const handleManualPayment = (obligation) => {
@@ -320,7 +329,7 @@ const PaymentManagementPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredObligations.map((obligation) => {
+              {obligationsPagination.pageItems.map((obligation) => {
                 const student = getStudentData(obligation.student_id)
                 const conceptName = getConceptName(obligation.concept_id)
                 const overdue = isOverdue(obligation)
@@ -420,6 +429,19 @@ const PaymentManagementPage = () => {
             </div>
           )}
         </div>
+
+        <Pagination
+          page={obligationsPagination.page}
+          totalPages={obligationsPagination.totalPages}
+          total={obligationsPagination.total}
+          from={obligationsPagination.from}
+          to={obligationsPagination.to}
+          pageSize={obligationsPagination.pageSize}
+          onPageChange={obligationsPagination.setPage}
+          onPrev={obligationsPagination.prev}
+          onNext={obligationsPagination.next}
+          onPageSizeChange={obligationsPagination.setPageSize}
+        />
       </div>
 
       {/* Modal de Pago Manual */}

@@ -5,6 +5,8 @@ import {
 } from 'lucide-react'
 import { documentsService } from '../../services/documentsService'
 import { formatDateSafe } from '../../utils/dateUtils'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const ParentDocuments = () => {
   const [documents, setDocuments] = useState([])
@@ -116,6 +118,9 @@ const ParentDocuments = () => {
     doc.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // Paginación de documentos
+  const pg = usePagination(filteredDocuments, 10, searchTerm)
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -190,7 +195,7 @@ const ParentDocuments = () => {
         ) : (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDocuments.map((document) => (
+              {pg.pageItems.map((document) => (
                 <motion.div
                   key={document.id}
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -249,6 +254,19 @@ const ParentDocuments = () => {
                 </motion.div>
               ))}
             </div>
+
+            <Pagination
+              page={pg.page}
+              totalPages={pg.totalPages}
+              total={pg.total}
+              from={pg.from}
+              to={pg.to}
+              pageSize={pg.pageSize}
+              onPageChange={pg.setPage}
+              onPrev={pg.prev}
+              onNext={pg.next}
+              onPageSizeChange={pg.setPageSize}
+            />
           </div>
         )}
       </div>

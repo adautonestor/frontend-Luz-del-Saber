@@ -16,6 +16,8 @@ import { getFileUrl } from '../../services/api'
 import { calculateMora, calculateDaysLate } from '../../utils/payments/moraCalculator.jsx'
 import { usePaymentsStore } from '../../stores/paymentsStore'
 import { parseDateOnly, formatDateSafe } from '../../utils/dateUtils'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 /**
  * Página principal de gestión de pagos
@@ -63,6 +65,13 @@ const PaymentsPage = () => {
 
   // Filtrar conceptos para mostrar
   const filteredConceptos = filtersHook.filterConcepts(conceptsHook.conceptos)
+
+  // Paginación de conceptos (cliente)
+  const conceptosPagination = usePagination(
+    filteredConceptos,
+    10,
+    JSON.stringify({ search: filtersHook.searchTerm, nivel: filtersHook.filterNivel })
+  )
 
   // Filtrar obligaciones
   const filteredObligations = obligationsHook.getFilteredObligations()
@@ -185,7 +194,7 @@ const PaymentsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredConceptos.map((concepto) => (
+                  {conceptosPagination.pageItems.map((concepto) => (
                     <tr key={concepto.id} className="hover:bg-gray-50">
                       {/* Nombre del concepto */}
                       <td className="px-6 py-4">
@@ -307,6 +316,19 @@ const PaymentsPage = () => {
                 </div>
               )}
             </div>
+
+            <Pagination
+              page={conceptosPagination.page}
+              totalPages={conceptosPagination.totalPages}
+              total={conceptosPagination.total}
+              from={conceptosPagination.from}
+              to={conceptosPagination.to}
+              pageSize={conceptosPagination.pageSize}
+              onPageChange={conceptosPagination.setPage}
+              onPrev={conceptosPagination.prev}
+              onNext={conceptosPagination.next}
+              onPageSizeChange={conceptosPagination.setPageSize}
+            />
           </div>
         </div>
       )}
@@ -431,6 +453,9 @@ const PaymentsPage = () => {
 
 // Componente separado para el contenido de Historial
 const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObligations, students }) => {
+  // Config de mora desde el store (usada en calculateMora para cuotas vencidas)
+  const { moraConfig } = usePaymentsStore()
+
   // Estado para edición de fechas (fuera del map)
   const [editingDateId, setEditingDateId] = React.useState(null)
   const [editedDates, setEditedDates] = React.useState({})
@@ -438,6 +463,17 @@ const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObliga
   // Estado para modal de detalles
   const [showDetailsModal, setShowDetailsModal] = React.useState(false)
   const [selectedObligationDetails, setSelectedObligationDetails] = React.useState(null)
+
+  // Paginación de obligaciones / historial (cliente)
+  const obligationsPagination = usePagination(
+    filteredObligations,
+    10,
+    JSON.stringify({
+      search: obligationsHook.searchStudent || '',
+      status: obligationsHook.filterStatus || '',
+      nivel: obligationsHook.filterNivel || ''
+    })
+  )
 
   const handleStartEdit = (obligationId, currentDate) => {
     setEditingDateId(obligationId)
@@ -587,7 +623,7 @@ const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObliga
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredObligations.slice(0, 50).map((obligation, index) => {
+              {obligationsPagination.pageItems.map((obligation, index) => {
                 const student = students.find(s => s.id === obligation.student_id)
                 const concept = conceptsHook.conceptos.find(c => c.id === obligation.concept_id)
 
@@ -603,7 +639,7 @@ const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObliga
                   <tr key={obligation.id} className="hover:bg-gray-50">
                     {/* Número de fila */}
                     <td className="px-4 py-4 text-center text-sm font-medium text-gray-500">
-                      {index + 1}
+                      {obligationsPagination.from + index}
                     </td>
 
                     {/* Estudiante con DNI */}
@@ -728,6 +764,18 @@ const HistorialContent = ({ obligationsHook, conceptsHook, stats, filteredObliga
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={obligationsPagination.page}
+          totalPages={obligationsPagination.totalPages}
+          total={obligationsPagination.total}
+          from={obligationsPagination.from}
+          to={obligationsPagination.to}
+          pageSize={obligationsPagination.pageSize}
+          onPageChange={obligationsPagination.setPage}
+          onPrev={obligationsPagination.prev}
+          onNext={obligationsPagination.next}
+          onPageSizeChange={obligationsPagination.setPageSize}
+        />
       </div>
 
       {/* Modal de Detalles */}
@@ -886,6 +934,9 @@ const PagosPorVerificarContent = () => {
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [processingId, setProcessingId] = useState(null)
 
+  // Paginación de intenciones / pagos por verificar (cliente)
+  const intentionsPagination = usePagination(intentions, 10, intentions.length)
+
   // Cargar intenciones pendientes
   useEffect(() => {
     loadPendingIntentions()
@@ -1008,7 +1059,7 @@ const PagosPorVerificarContent = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {intentions.map((intention) => (
+                {intentionsPagination.pageItems.map((intention) => (
                   <tr key={intention.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
@@ -1072,6 +1123,18 @@ const PagosPorVerificarContent = () => {
                 ))}
               </tbody>
             </table>
+            <Pagination
+              page={intentionsPagination.page}
+              totalPages={intentionsPagination.totalPages}
+              total={intentionsPagination.total}
+              from={intentionsPagination.from}
+              to={intentionsPagination.to}
+              pageSize={intentionsPagination.pageSize}
+              onPageChange={intentionsPagination.setPage}
+              onPrev={intentionsPagination.prev}
+              onNext={intentionsPagination.next}
+              onPageSizeChange={intentionsPagination.setPageSize}
+            />
           </div>
         )}
       </div>

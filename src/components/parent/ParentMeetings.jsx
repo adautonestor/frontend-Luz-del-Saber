@@ -10,6 +10,8 @@ import parentMeetingsService from '../../services/parentMeetingsService'
 import meetingAttendancesService from '../../services/meetingAttendancesService'
 import structureService from '../../services/academic/structureService'
 import { parseDateOnly } from '../../utils/dateUtils'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const ParentMeetings = () => {
   const { user } = useAuthStore()
@@ -133,6 +135,9 @@ const ParentMeetings = () => {
     const meetingDate = parseDateOnly(m.fecha)
     return (meetingDate && meetingDate.getTime() < today.getTime()) || m.state === 'realizada' || m.state === 'cancelada'
   })
+
+  // Paginación del historial de reuniones
+  const pg = usePagination(pastMeetings, 10, `${selectedYear}:${pastMeetings.length}`)
 
   return (
     <div className="space-y-6">
@@ -291,7 +296,7 @@ const ParentMeetings = () => {
                 Historial de Reuniones
               </h2>
               <div className="space-y-4">
-                {pastMeetings.map((meeting, index) => {
+                {pg.pageItems.map((meeting, index) => {
                   const status = getMeetingStatus(meeting)
                   const StatusIcon = status.icon
 
@@ -356,6 +361,19 @@ const ParentMeetings = () => {
                   )
                 })}
               </div>
+
+              <Pagination
+                page={pg.page}
+                totalPages={pg.totalPages}
+                total={pg.total}
+                from={pg.from}
+                to={pg.to}
+                pageSize={pg.pageSize}
+                onPageChange={pg.setPage}
+                onPrev={pg.prev}
+                onNext={pg.next}
+                onPageSizeChange={pg.setPageSize}
+              />
             </div>
           )}
 

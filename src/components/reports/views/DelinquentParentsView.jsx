@@ -1,6 +1,8 @@
 import React from 'react'
 import { AlertCircle, DollarSign, Activity } from 'lucide-react'
 import { formatDateSafe } from '../../../utils/dateUtils'
+import Pagination from '../../common/Pagination'
+import { usePagination } from '../../../hooks/usePagination'
 
 /**
  * Vista de reporte de padres morosos
@@ -11,6 +13,9 @@ const DelinquentParentsView = ({
   paymentCommitments,
   togglePaymentCommitment
 }) => {
+  // Paginación del lado del cliente sobre la tabla de padres morosos
+  const pg = usePagination(reportData.data, 10, reportData.data?.length)
+
   return (
     <div className="space-y-6">
       {/* Estadísticas */}
@@ -57,7 +62,7 @@ const DelinquentParentsView = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {reportData.data.map((parent, index) => (
+            {pg.pageItems.map((parent, index) => (
               <tr key={index} className={`hover:bg-gray-50 ${
                 parent.totalDebt > 1000 ? 'bg-red-25' :
                 parent.totalDebt > 500 ? 'bg-orange-25' : ''
@@ -143,6 +148,18 @@ const DelinquentParentsView = ({
             ))}
           </tbody>
         </table>
+        <Pagination
+          page={pg.page}
+          totalPages={pg.totalPages}
+          total={pg.total}
+          from={pg.from}
+          to={pg.to}
+          pageSize={pg.pageSize}
+          onPageChange={pg.setPage}
+          onPrev={pg.prev}
+          onNext={pg.next}
+          onPageSizeChange={pg.setPageSize}
+        />
       </div>
     </div>
   )

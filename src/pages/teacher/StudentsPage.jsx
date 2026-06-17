@@ -7,6 +7,8 @@ import {
   Download, MessageSquare, Star, Clock
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const StudentsPage = () => {
   const { user } = useAuthStore()
@@ -145,6 +147,9 @@ const StudentsPage = () => {
     
     return matchesSearch && matchesCourse
   })
+
+  // Paginación de la lista de estudiantes
+  const pg = usePagination(filteredStudents, 10, JSON.stringify({ searchTerm, selectedCourse }))
 
   const getGradeColor = (grade) => {
     if (grade >= 17) return 'text-green-600 bg-green-100'
@@ -318,7 +323,7 @@ const StudentsPage = () => {
 
       {/* Students Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredStudents.map((student, index) => (
+        {pg.pageItems.map((student, index) => (
           <motion.div
             key={student.id}
             initial={{ opacity: 0, y: 20 }}
@@ -385,6 +390,19 @@ const StudentsPage = () => {
           </motion.div>
         ))}
       </div>
+
+      <Pagination
+        page={pg.page}
+        totalPages={pg.totalPages}
+        total={pg.total}
+        from={pg.from}
+        to={pg.to}
+        pageSize={pg.pageSize}
+        onPageChange={pg.setPage}
+        onPrev={pg.prev}
+        onNext={pg.next}
+        onPageSizeChange={pg.setPageSize}
+      />
 
       {filteredStudents.length === 0 && (
         <div className="text-center py-12">

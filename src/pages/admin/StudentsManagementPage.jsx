@@ -19,6 +19,8 @@ import StudentsTable from '../../components/admin/StudentsTable'
 import DeleteStudentModal from '../../components/admin/DeleteStudentModal'
 import ChangeParentModal from '../../components/admin/ChangeParentModal'
 import ViewStudentModal from '../../components/enrollment/modals/ViewStudentModal'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 /**
  * Página principal de gestión de estudiantes
@@ -154,6 +156,13 @@ const StudentsManagementPage = () => {
 
   // Calcular estadísticas
   const stats = useMemo(() => calculateStudentStats(students), [students])
+
+  // Paginación de la tabla de estudiantes
+  const studentsPagination = usePagination(
+    filteredStudents,
+    10,
+    JSON.stringify({ searchTerm, filterNivel, filterGrado, sortOrder, showAllStudents })
+  )
 
   // Handlers
   const handleDeleteStudent = async () => {
@@ -328,7 +337,7 @@ const StudentsManagementPage = () => {
 
       {/* Students Table */}
       <StudentsTable
-        students={filteredStudents}
+        students={studentsPagination.pageItems}
         userRole={user?.rol}
         onView={(student) => {
           setViewingStudent(student)
@@ -348,6 +357,19 @@ const StudentsManagementPage = () => {
           setSelectedStudent(student)
           setShowDeleteConfirm(true)
         }}
+      />
+
+      <Pagination
+        page={studentsPagination.page}
+        totalPages={studentsPagination.totalPages}
+        total={studentsPagination.total}
+        from={studentsPagination.from}
+        to={studentsPagination.to}
+        pageSize={studentsPagination.pageSize}
+        onPageChange={studentsPagination.setPage}
+        onPrev={studentsPagination.prev}
+        onNext={studentsPagination.next}
+        onPageSizeChange={studentsPagination.setPageSize}
       />
 
       {/* Modals */}

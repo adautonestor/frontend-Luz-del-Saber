@@ -31,6 +31,8 @@ import CoursesWithoutGradesView from '../../components/reports/views/CoursesWith
 import SummaryView from '../../components/reports/views/SummaryView'
 import QuickStatsSection from '../../components/reports/QuickStatsSection'
 import FailedCoursesModal from '../../components/reports/FailedCoursesModal'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { academicYearService } from '../../services/academic/academicYearService'
 
 const ReportsPage = () => {
@@ -48,6 +50,14 @@ const ReportsPage = () => {
     seccion: 'todos',
     minCursosDesaprobados: 0
   })
+
+  // Paginación del lado del cliente para la tabla del Cuadro de Honor
+  const honorRollData = reportData?.type === 'honor-roll' ? (reportData.data || []) : []
+  const honorRollPg = usePagination(
+    honorRollData,
+    10,
+    `${reportData?.type || ''}-${honorRollData.length}`
+  )
 
   // Cargar año lectivo activo
   useEffect(() => {
@@ -552,13 +562,16 @@ const ReportsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {reportData.data?.map((student, idx) => (
-                <tr key={idx} className={idx < 3 ? 'bg-yellow-50' : ''}>
+              {honorRollPg.pageItems.map((student, idx) => {
+                // Índice absoluto (considerando la página actual) para mantener el podio
+                const absIdx = honorRollPg.from - 1 + idx
+                return (
+                <tr key={absIdx} className={absIdx < 3 ? 'bg-yellow-50' : ''}>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
-                      idx === 0 ? 'bg-yellow-400 text-white' :
-                      idx === 1 ? 'bg-gray-300 text-gray-700' :
-                      idx === 2 ? 'bg-orange-300 text-white' :
+                      absIdx === 0 ? 'bg-yellow-400 text-white' :
+                      absIdx === 1 ? 'bg-gray-300 text-gray-700' :
+                      absIdx === 2 ? 'bg-orange-300 text-white' :
                       'bg-gray-100 text-gray-600'
                     }`}>
                       {student.rank}
@@ -578,9 +591,22 @@ const ReportsPage = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
+          <Pagination
+            page={honorRollPg.page}
+            totalPages={honorRollPg.totalPages}
+            total={honorRollPg.total}
+            from={honorRollPg.from}
+            to={honorRollPg.to}
+            pageSize={honorRollPg.pageSize}
+            onPageChange={honorRollPg.setPage}
+            onPrev={honorRollPg.prev}
+            onNext={honorRollPg.next}
+            onPageSizeChange={honorRollPg.setPageSize}
+          />
         </div>
 
         {reportData.data?.length === 0 && (

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
 import studentsService from '../../services/studentsService'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const AttendanceMonthlyReport = ({
   selectedCourse,
@@ -46,6 +48,18 @@ const AttendanceMonthlyReport = ({
 
     loadStudents()
   }, [selectedCourse?.id, selectedSection?.id])
+
+  // Paginación del reporte mensual
+  const pg = usePagination(
+    classStudents,
+    10,
+    JSON.stringify({
+      course: selectedCourse?.id,
+      section: selectedSection?.id,
+      month: selectedMonth,
+      year: selectedYear
+    })
+  )
 
   return (
     <>
@@ -116,7 +130,7 @@ const AttendanceMonthlyReport = ({
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {classStudents.map((student, index) => {
+                {pg.pageItems.map((student, index) => {
                   const stats = getMonthlyStats(student.id, selectedYear, selectedMonth)
 
                   return (
@@ -167,6 +181,19 @@ const AttendanceMonthlyReport = ({
                 })}
               </tbody>
             </table>
+
+            <Pagination
+              page={pg.page}
+              totalPages={pg.totalPages}
+              total={pg.total}
+              from={pg.from}
+              to={pg.to}
+              pageSize={pg.pageSize}
+              onPageChange={pg.setPage}
+              onPrev={pg.prev}
+              onNext={pg.next}
+              onPageSizeChange={pg.setPageSize}
+            />
           </div>
         )}
       </div>

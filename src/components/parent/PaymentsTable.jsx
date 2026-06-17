@@ -4,6 +4,8 @@ import { CreditCard, Eye, Download } from 'lucide-react'
 import { formatDate, formatCurrency, getStatusColor, getStatusIcon, getStatusText } from '../../utils/paymentHelpers.jsx'
 import { calculateMora, calculateDaysLate } from '../../utils/payments/moraCalculator.jsx'
 import { usePaymentsStore } from '../../stores/paymentsStore'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 /**
  * Componente de tabla de pagos
@@ -11,6 +13,9 @@ import { usePaymentsStore } from '../../stores/paymentsStore'
  */
 const PaymentsTable = ({ payments, onPayClick, onViewProof }) => {
   const { moraConfig } = usePaymentsStore()
+
+  // Paginación de las obligaciones de pago
+  const pg = usePagination(payments, 10, `${payments?.length || 0}:${payments?.[0]?.id || ''}:${payments?.[payments.length - 1]?.id || ''}`)
 
   return (
     <div className="card">
@@ -48,7 +53,7 @@ const PaymentsTable = ({ payments, onPayClick, onViewProof }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {payments.map((payment, index) => (
+            {pg.pageItems.map((payment, index) => (
               <motion.tr
                 key={payment.id}
                 initial={{ opacity: 0 }}
@@ -155,6 +160,19 @@ const PaymentsTable = ({ payments, onPayClick, onViewProof }) => {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        page={pg.page}
+        totalPages={pg.totalPages}
+        total={pg.total}
+        from={pg.from}
+        to={pg.to}
+        pageSize={pg.pageSize}
+        onPageChange={pg.setPage}
+        onPrev={pg.prev}
+        onNext={pg.next}
+        onPageSizeChange={pg.setPageSize}
+      />
     </div>
   )
 }

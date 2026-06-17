@@ -17,6 +17,8 @@ import AddColumnModal from '../../components/teacher/grades/AddColumnModal'
 import GradesLegend from '../../components/teacher/grades/GradesLegend'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import ReportCardDownloadModal from '../../components/teacher/grades/ReportCardDownloadModal'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 /**
  * Página de registro de notas del profesor
@@ -50,6 +52,19 @@ const TeacherGradesPage = () => {
     user: gradeData.user,
     refreshStructures: gradeData.refreshStructures
   })
+
+  // Paginación de la tabla de notas (por estudiante)
+  const pg = usePagination(
+    gradeData.filteredStudents,
+    10,
+    JSON.stringify({
+      course: gradeData.selectedCourse,
+      bimester: gradeData.selectedBimester,
+      grade: gradeData.selectedGrade,
+      section: gradeData.selectedSection,
+      search: gradeData.searchTerm
+    })
+  )
 
   // Navegación entre celdas para compatibilidad con ExcelGradeCell
   const handleCellNavigation = (studentIndex, evalTypeIndex, direction) => {
@@ -318,7 +333,9 @@ const TeacherGradesPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {gradeData.filteredStudents.map((student, index) => {
+                {pg.pageItems.map((student, index) => {
+                  // Número de fila global considerando la página actual
+                  const rowNumber = pg.from + index
                   // ✅ CORREGIDO: calculateAverage ahora retorna objeto {numeric, formatted, display}
                   const averageObj = gradeData.calculateAverage(student.id)
                   // const isApproved = averageObj && averageObj.numeric >= 11 // No se usa actualmente
@@ -332,7 +349,7 @@ const TeacherGradesPage = () => {
                       className="hover:bg-gray-50"
                     >
                       <td className="px-4 py-3 text-center text-gray-900 font-medium sticky left-0 bg-white z-10">
-                        {index + 1}
+                        {rowNumber}
                       </td>
                       <td className="px-4 py-3 sticky left-12 bg-white z-10 border-r border-gray-300">
                         <div>
@@ -403,6 +420,19 @@ const TeacherGradesPage = () => {
               </div>
             )}
           </div>
+
+          <Pagination
+            page={pg.page}
+            totalPages={pg.totalPages}
+            total={pg.total}
+            from={pg.from}
+            to={pg.to}
+            pageSize={pg.pageSize}
+            onPageChange={pg.setPage}
+            onPrev={pg.prev}
+            onNext={pg.next}
+            onPageSizeChange={pg.setPageSize}
+          />
         </div>
       )}
 

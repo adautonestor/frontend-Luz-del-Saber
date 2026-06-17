@@ -31,6 +31,8 @@ import AlertModal from '@/components/common/AlertModal'
 import ConfirmModal from '@/components/common/ConfirmModal'
 import studentsService from '../../services/studentsService'
 import gradesService from '../../services/gradesService'
+import Pagination from '@/components/common/Pagination'
+import { usePagination } from '@/hooks/usePagination'
 
 export default function PsychologicalReportsPage() {
   // Modales
@@ -135,6 +137,13 @@ export default function PsychologicalReportsPage() {
     students,
     selectedLevel,
     selectedGrade
+  )
+
+  // Paginación de la tabla de estudiantes
+  const studentsPagination = usePagination(
+    filteredStudents,
+    10,
+    JSON.stringify({ selectedYear, searchTerm, selectedLevel, selectedGrade, selectedSection })
   )
 
   // Handlers
@@ -266,13 +275,26 @@ export default function PsychologicalReportsPage() {
 
         {/* Tabla de estudiantes */}
         <PsychReportsTable
-          students={filteredStudents}
+          students={studentsPagination.pageItems}
           loading={loading}
           hasReport={hasStudentReport}
           onViewReport={handleViewReport}
           onDownloadReport={handleDownloadReport}
           onDeleteReport={handleDeleteReport}
           onUploadReport={handleUploadIndividual}
+        />
+
+        <Pagination
+          page={studentsPagination.page}
+          totalPages={studentsPagination.totalPages}
+          total={studentsPagination.total}
+          from={studentsPagination.from}
+          to={studentsPagination.to}
+          pageSize={studentsPagination.pageSize}
+          onPageChange={studentsPagination.setPage}
+          onPrev={studentsPagination.prev}
+          onNext={studentsPagination.next}
+          onPageSizeChange={studentsPagination.setPageSize}
         />
 
         {/* Resumen */}

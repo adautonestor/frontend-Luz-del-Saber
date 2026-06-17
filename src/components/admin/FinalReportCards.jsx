@@ -18,6 +18,8 @@ import {
 import { getGradingScalesStore } from '../../stores/gradingScalesStore'
 import { attendanceService } from '../../services/attendanceService'
 import { generateAttendanceDataForReportCard } from '../../utils/attendanceCalculator'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const FinalReportCards = () => {
   const { user } = useAuthStore()
@@ -52,6 +54,13 @@ const FinalReportCards = () => {
     handleBehaviorDataChange,
     saveBehaviorData
   } = useBehaviorEditor(filters, user)
+
+  // Paginación de la tabla de boletas finales
+  const studentsPagination = usePagination(
+    filteredStudents,
+    10,
+    JSON.stringify({ selectedYear, selectedGrade, searchTerm })
+  )
 
   // Inicializar: cargar años académicos del store y estudiantes
   useEffect(() => {
@@ -516,7 +525,7 @@ const FinalReportCards = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredStudents.map((student, index) => {
+            {studentsPagination.pageItems.map((student, index) => {
               const grade = grades.find(g => g.id === student.grade_id)
               // Obtener el nivel desde el store para tener acceso al nombre
               // Usar Number() para asegurar comparación correcta de tipos
@@ -589,6 +598,19 @@ const FinalReportCards = () => {
             </p>
           </div>
         )}
+
+        <Pagination
+          page={studentsPagination.page}
+          totalPages={studentsPagination.totalPages}
+          total={studentsPagination.total}
+          from={studentsPagination.from}
+          to={studentsPagination.to}
+          pageSize={studentsPagination.pageSize}
+          onPageChange={studentsPagination.setPage}
+          onPrev={studentsPagination.prev}
+          onNext={studentsPagination.next}
+          onPageSizeChange={studentsPagination.setPageSize}
+        />
       </div>
 
       {loading && (

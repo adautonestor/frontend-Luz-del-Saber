@@ -7,11 +7,16 @@ import AvisosStats from '../../components/admin/AvisosStats'
 import AvisoCard from '../../components/admin/AvisoCard'
 import CreateAvisoModal from '../../components/admin/CreateAvisoModal'
 import ViewAvisoModal from '../../components/admin/ViewAvisoModal'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 const AvisosPage = () => {
   const { user } = useAuthStore()
   const state = useAvisosPageState(user)
   const uploadHandlers = useAvisoFileUpload(state.formData, state.setFormData)
+
+  // Paginación del lado del cliente sobre la lista de avisos
+  const pg = usePagination(state.avisos, 10, state.avisos.length)
 
   if (state.loading) {
     return (
@@ -63,20 +68,34 @@ const AvisosPage = () => {
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
-            {state.avisos.map((aviso) => (
-              <AvisoCard
-                key={aviso.id}
-                aviso={aviso}
-                setSelectedAviso={state.setSelectedAviso}
-                handleToggleActive={state.handleToggleActive}
-                handleDelete={state.handleDelete}
-                handleDownload={state.handleDownload}
-                formatFileSize={state.formatFileSize}
-                isPDF={state.isPDF}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-6">
+              {pg.pageItems.map((aviso) => (
+                <AvisoCard
+                  key={aviso.id}
+                  aviso={aviso}
+                  setSelectedAviso={state.setSelectedAviso}
+                  handleToggleActive={state.handleToggleActive}
+                  handleDelete={state.handleDelete}
+                  handleDownload={state.handleDownload}
+                  formatFileSize={state.formatFileSize}
+                  isPDF={state.isPDF}
+                />
+              ))}
+            </div>
+            <Pagination
+              page={pg.page}
+              totalPages={pg.totalPages}
+              total={pg.total}
+              from={pg.from}
+              to={pg.to}
+              pageSize={pg.pageSize}
+              onPageChange={pg.setPage}
+              onPrev={pg.prev}
+              onNext={pg.next}
+              onPageSizeChange={pg.setPageSize}
+            />
+          </>
         )}
       </div>
 

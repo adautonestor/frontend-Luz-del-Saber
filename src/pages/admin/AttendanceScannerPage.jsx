@@ -154,11 +154,23 @@ const AttendanceScannerPage = () => {
     section_name: r.section_name
   })
 
-  // Filas a mostrar en la tabla: solo registros, o roster completo (con/sin registro).
+  // ¿El estudiante ya tiene asistencia (presente/tardanza)? En ese caso NO es
+  // candidato a falta y se oculta de la lista de "estudiantes sin registro".
+  const tienePresencia = (record) =>
+    !!record && (
+      !!record.entry_time1 ||
+      ['asistio', 'a_tiempo', 'presente', 'tardanza'].includes(record.entry_status1)
+    )
+
+  // Filas a mostrar en la tabla:
+  // - includeRoster: solo los estudiantes AUSENTES (sin registro o ya marcados falta/blanco),
+  //   que son a los que se les puede marcar/justificar falta.
+  // - normal: los registros del día.
   const displayRows = includeRoster
     ? rosterStudents
         .filter(studentMatchesFilters)
         .map(s => ({ key: `stu-${s.id}`, student: s, record: dayRecords.find(r => r.student_id === s.id) || null }))
+        .filter(row => !tienePresencia(row.record))
         .sort((a, b) =>
           `${a.student.paternal_last_name || ''} ${a.student.maternal_last_name || ''} ${a.student.first_names || ''}`
             .localeCompare(`${b.student.paternal_last_name || ''} ${b.student.maternal_last_name || ''} ${b.student.first_names || ''}`)
@@ -1198,7 +1210,7 @@ const AttendanceScannerPage = () => {
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <label htmlFor="includeRoster" className="text-sm text-gray-700 cursor-pointer select-none">
-                Mostrar estudiantes sin registro para <strong>marcar faltas</strong>
+                Mostrar solo estudiantes <strong>sin asistencia</strong> (para marcar/justificar faltas)
                 {loadingRoster && <span className="ml-2 text-gray-400">(cargando...)</span>}
               </label>
               <span className="text-xs text-gray-400 ml-1">
@@ -1271,7 +1283,7 @@ const AttendanceScannerPage = () => {
                 <ClipboardList className="mx-auto h-12 w-12 text-gray-400 mb-3" />
                 <p className="text-gray-500">
                   {includeRoster
-                    ? 'No hay estudiantes que coincidan con los filtros'
+                    ? 'Todos los estudiantes (según los filtros) ya tienen asistencia registrada'
                     : 'No hay registros de asistencia para esta fecha'}
                 </p>
               </div>

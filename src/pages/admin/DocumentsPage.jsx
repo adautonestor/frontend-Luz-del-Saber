@@ -8,6 +8,8 @@ import DocumentUploadModal from '../../components/documents/DocumentUploadModal'
 import DocumentViewModal from '../../components/documents/DocumentViewModal'
 import DocumentCard from '../../components/documents/DocumentCard'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { documentsService } from '../../services/documentsService'
 
 const DocumentsPage = () => {
@@ -213,6 +215,9 @@ const DocumentsPage = () => {
     doc.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // Paginación del lado del cliente sobre los documentos ya filtrados
+  const pg = usePagination(filteredDocuments, 10, searchTerm)
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -294,7 +299,7 @@ const DocumentsPage = () => {
         ) : (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDocuments.map((document) => (
+              {pg.pageItems.map((document) => (
                 <DocumentCard
                   key={document.id}
                   document={document}
@@ -305,6 +310,18 @@ const DocumentsPage = () => {
                 />
               ))}
             </div>
+            <Pagination
+              page={pg.page}
+              totalPages={pg.totalPages}
+              total={pg.total}
+              from={pg.from}
+              to={pg.to}
+              pageSize={pg.pageSize}
+              onPageChange={pg.setPage}
+              onPrev={pg.prev}
+              onNext={pg.next}
+              onPageSizeChange={pg.setPageSize}
+            />
           </div>
         )}
       </div>

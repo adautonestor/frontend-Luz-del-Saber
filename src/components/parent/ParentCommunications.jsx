@@ -11,6 +11,8 @@ import CommunicationsFilters from './CommunicationsFilters'
 import CommunicationsSummaryCards from './CommunicationsSummaryCards'
 import CommunicationsList from './CommunicationsList'
 import CommunicationDetailModal from './CommunicationDetailModal'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 /**
  * Componente principal de comunicaciones para padres
@@ -56,10 +58,13 @@ const ParentCommunications = () => {
     return calculateCommunicationStats(communications)
   }, [communications, calculateCommunicationStats])
 
-  // Agrupar comunicados filtrados por mes
+  // Paginación de la lista de comunicados (sobre el arreglo filtrado y plano)
+  const pg = usePagination(filteredCommunications, 10, JSON.stringify({ searchTerm, filterType, filterStatus }))
+
+  // Agrupar por mes solo los comunicados de la página actual
   const groupedCommunications = useMemo(() => {
-    return groupCommunicationsByMonth(filteredCommunications)
-  }, [filteredCommunications, groupCommunicationsByMonth])
+    return groupCommunicationsByMonth(pg.pageItems)
+  }, [pg.pageItems, groupCommunicationsByMonth])
 
   // Handlers
   const handleOpenCommunication = async (communication) => {
@@ -111,6 +116,19 @@ const ParentCommunications = () => {
       <CommunicationsList
         groupedCommunications={groupedCommunications}
         onOpenCommunication={handleOpenCommunication}
+      />
+
+      <Pagination
+        page={pg.page}
+        totalPages={pg.totalPages}
+        total={pg.total}
+        from={pg.from}
+        to={pg.to}
+        pageSize={pg.pageSize}
+        onPageChange={pg.setPage}
+        onPrev={pg.prev}
+        onNext={pg.next}
+        onPageSizeChange={pg.setPageSize}
       />
 
       {/* Modal de Detalle */}

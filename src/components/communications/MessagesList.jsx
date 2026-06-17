@@ -6,6 +6,8 @@ import {
   Image, File
 } from 'lucide-react'
 import { formatDateOnly, parseDateOnly, isPastDate } from '../../utils/dateUtils'
+import Pagination from '../common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 
 /**
  * Lista de mensajes de comunicaciones con filtros, búsqueda y acciones
@@ -57,27 +59,6 @@ const MessagesList = ({
   getRecipientCount,
   onDelete
 }) => {
-  if (communications.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <MessageSquare className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          No hay comunicados aún
-        </h3>
-        <p className="text-gray-600 mb-6">
-          Comienza enviando tu primer comunicado a la comunidad educativa.
-        </p>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="btn btn-primary flex items-center gap-2 mx-auto"
-        >
-          <Send size={20} />
-          Enviar Primer Comunicado
-        </button>
-      </div>
-    )
-  }
-
   // Filtrar comunicaciones
   const filteredCommunications = communications
     .filter(c => {
@@ -122,6 +103,35 @@ const MessagesList = ({
       return (priorityOrder[b.prioridad] || 0) - (priorityOrder[a.prioridad] || 0)
     })
 
+  // Paginación del lado del cliente sobre la lista ya filtrada
+  const pg = usePagination(
+    filteredCommunications,
+    10,
+    JSON.stringify({ searchTerm, typeFilter, statusFilter, priorityFilter })
+  )
+
+  // Estado vacío: no hay comunicados aún
+  if (communications.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <MessageSquare className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          No hay comunicados aún
+        </h3>
+        <p className="text-gray-600 mb-6">
+          Comienza enviando tu primer comunicado a la comunidad educativa.
+        </p>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="btn btn-primary flex items-center gap-2 mx-auto"
+        >
+          <Send size={20} />
+          Enviar Primer Comunicado
+        </button>
+      </div>
+    )
+  }
+
   // Mostrar mensaje si no hay resultados después de filtrar
   if (filteredCommunications.length === 0) {
     return (
@@ -139,7 +149,7 @@ const MessagesList = ({
 
   return (
     <div>
-      {filteredCommunications.map((comm) => (
+      {pg.pageItems.map((comm) => (
           <motion.div
             key={comm.id}
             initial={{ opacity: 0 }}
@@ -360,6 +370,20 @@ const MessagesList = ({
             </div>
           </motion.div>
         ))}
+
+      {/* Paginación */}
+      <Pagination
+        page={pg.page}
+        totalPages={pg.totalPages}
+        total={pg.total}
+        from={pg.from}
+        to={pg.to}
+        pageSize={pg.pageSize}
+        onPageChange={pg.setPage}
+        onPrev={pg.prev}
+        onNext={pg.next}
+        onPageSizeChange={pg.setPageSize}
+      />
 
       {/* Resumen de actividad */}
       {communications.length > 0 && (
