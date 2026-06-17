@@ -13,6 +13,8 @@ import { useAttendanceStore } from '../../stores/attendanceStore'
 import { attendanceService } from '../../services/attendanceService'
 import studentsService from '../../services/studentsService'
 import { useAcademicStore } from '../../stores/academicStore'
+import Pagination from '../../components/common/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { getTodayLima, formatDateSafe } from '../../utils/dateUtils'
 
 const AttendanceScannerPage = () => {
@@ -176,6 +178,14 @@ const AttendanceScannerPage = () => {
             .localeCompare(`${b.student.paternal_last_name || ''} ${b.student.maternal_last_name || ''} ${b.student.first_names || ''}`)
         )
     : filteredRecords.map(r => ({ key: `rec-${r.id}`, student: studentFromRecord(r), record: r }))
+
+  // Paginación de la tabla de registros y del panel de escaneos recientes
+  const recordsPagination = usePagination(
+    displayRows,
+    15,
+    JSON.stringify({ searchTerm, filterLevel, filterGrade, filterSection, recordsDate, includeRoster })
+  )
+  const recentScansPagination = usePagination(recentScans, 10, recentScans.length)
 
   // Cargar el roster de estudiantes (para mostrar quienes no tienen registro)
   const loadRoster = async () => {
@@ -1002,7 +1012,7 @@ const AttendanceScannerPage = () => {
             </div>
           ) : (
             <div className="space-y-3 max-h-[500px] overflow-y-auto">
-              {recentScans.map((scan, index) => (
+              {recentScansPagination.pageItems.map((scan, index) => (
                 <motion.div
                   key={`${scan.student?.id}-${scan.eventName}-${scan.timestamp}`}
                   initial={{ opacity: 0, x: -20 }}
@@ -1049,6 +1059,18 @@ const AttendanceScannerPage = () => {
               ))}
             </div>
           )}
+          <Pagination
+            page={recentScansPagination.page}
+            totalPages={recentScansPagination.totalPages}
+            total={recentScansPagination.total}
+            from={recentScansPagination.from}
+            to={recentScansPagination.to}
+            pageSize={recentScansPagination.pageSize}
+            onPageChange={recentScansPagination.setPage}
+            onPrev={recentScansPagination.prev}
+            onNext={recentScansPagination.next}
+            onPageSizeChange={recentScansPagination.setPageSize}
+          />
         </div>
       </div>
 
@@ -1301,7 +1323,7 @@ const AttendanceScannerPage = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {displayRows.map(({ key, student, record }, index) => {
+                    {recordsPagination.pageItems.map(({ key, student, record }, index) => {
                       const isPresent = !!(record && record.entry_time1)
                       const isFalta = record && (record.entry_status1 === 'falta' || (!record.entry_time1 && record.entry_status1 === 'falta'))
                       const isTardanza = record && record.entry_status1 === 'tardanza'
@@ -1420,6 +1442,18 @@ const AttendanceScannerPage = () => {
                 </table>
               </div>
             )}
+            <Pagination
+              page={recordsPagination.page}
+              totalPages={recordsPagination.totalPages}
+              total={recordsPagination.total}
+              from={recordsPagination.from}
+              to={recordsPagination.to}
+              pageSize={recordsPagination.pageSize}
+              onPageChange={recordsPagination.setPage}
+              onPrev={recordsPagination.prev}
+              onNext={recordsPagination.next}
+              onPageSizeChange={recordsPagination.setPageSize}
+            />
           </div>
         </div>
       )}
